@@ -21,7 +21,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
 
         await connectDB();
-        const user = await AdminUser.findOne({ email: credentials.email }).lean();
+        const email = (credentials.email as string).toLowerCase();
+        const user = await AdminUser.findOne({ email }).lean();
         if (!user) return null;
 
         const passwordHash = hashPassword(credentials.password as string);
