@@ -60,7 +60,7 @@ function CTABannerView({ node, updateAttributes }: any) {
   const BTN_H = 52;
 
   return (
-    <NodeViewWrapper as="div" className="my-4 group/banner" contentEditable={false}>
+    <NodeViewWrapper as="div" className="my-10 group/banner" contentEditable={false}>
       <div style={{ borderRadius: 20, backgroundColor: "#F15C20", padding: "40px 6% 36px", textAlign: "center", fontFamily: "Arial,sans-serif", boxSizing: "border-box", width: "100%", overflow: "hidden" }}>
 
         {/* Heading — centered */}
@@ -89,17 +89,17 @@ function CTABannerView({ node, updateAttributes }: any) {
           {paragraph}
         </p>
 
-        {/* Button: pill + adjacent arrow circle, same height, no gap */}
-        <div style={{ display: "inline-flex", alignItems: "stretch" }}>
+        {/* Button: pill + adjacent arrow circle, with gap */}
+        <div style={{ display: "inline-flex", alignItems: "stretch", gap: "0px" }}>
           <span
             contentEditable suppressContentEditableWarning
             onKeyDown={stopKey}
             onBlur={(e) => updateAttributes({ buttonText: e.currentTarget.textContent ?? "" })}
-            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#fff", color: "#F15C20", fontSize: 14, fontWeight: 600, padding: "0 32px", borderRadius: "50px 0 0 50px", whiteSpace: "nowrap", outline: "none", cursor: "text", minWidth: 160, height: BTN_H, lineHeight: "1" }}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#fff", color: "#F15C20", fontSize: 14, fontWeight: 600, padding: "0 32px", borderRadius: "50px", whiteSpace: "nowrap", outline: "none", cursor: "text", minWidth: 160, height: BTN_H, lineHeight: "1" }}
           >
             {buttonText}
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#fff", color: "#F15C20", width: BTN_H, height: BTN_H, borderRadius: "0 50px 50px 0", flexShrink: 0 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#fff", color: "#F15C20", width: BTN_H, height: BTN_H, borderRadius: "50px", flexShrink: 0 }}>
             <FiArrowUpRight size={20} />
           </span>
         </div>
@@ -135,11 +135,11 @@ const CTABannerNode = Node.create({
 
   addAttributes() {
     return {
-      heading:          { default: DEFAULT_CTA.heading },
-      paragraph:        { default: DEFAULT_CTA.paragraph },
-      buttonText:       { default: DEFAULT_CTA.buttonText },
-      buttonHref:       { default: DEFAULT_CTA.buttonHref },
-      ctaType:          { default: "link" },
+      heading: { default: DEFAULT_CTA.heading },
+      paragraph: { default: DEFAULT_CTA.paragraph },
+      buttonText: { default: DEFAULT_CTA.buttonText },
+      buttonHref: { default: DEFAULT_CTA.buttonHref },
+      ctaType: { default: "link" },
       inputPlaceholder: { default: "Enter your email..." },
     };
   },
@@ -150,11 +150,11 @@ const CTABannerNode = Node.create({
       getAttrs: (dom) => {
         const el = dom as HTMLElement;
         return {
-          heading:          el.getAttribute("data-heading")           ?? DEFAULT_CTA.heading,
-          paragraph:        el.getAttribute("data-paragraph")         ?? DEFAULT_CTA.paragraph,
-          buttonText:       el.getAttribute("data-button-text")       ?? DEFAULT_CTA.buttonText,
-          buttonHref:       el.getAttribute("data-button-href")       ?? DEFAULT_CTA.buttonHref,
-          ctaType:          el.getAttribute("data-cta-type")          ?? "link",
+          heading: el.getAttribute("data-heading") ?? DEFAULT_CTA.heading,
+          paragraph: el.getAttribute("data-paragraph") ?? DEFAULT_CTA.paragraph,
+          buttonText: el.getAttribute("data-button-text") ?? DEFAULT_CTA.buttonText,
+          buttonHref: el.getAttribute("data-button-href") ?? DEFAULT_CTA.buttonHref,
+          ctaType: el.getAttribute("data-cta-type") ?? "link",
           inputPlaceholder: el.getAttribute("data-input-placeholder") ?? "Enter your email...",
         };
       },
@@ -173,23 +173,28 @@ const CTABannerNode = Node.create({
       "data-button-href": buttonHref,
       "data-cta-type": ctaType,
       "data-input-placeholder": inputPlaceholder,
-      style: "border-radius:20px;background-color:#F15C20;padding:40px 6% 36px;text-align:center;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;overflow:hidden",
+      style: "border-radius:20px;background-color:#F15C20;padding:40px 6% 36px;text-align:center;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;overflow:hidden;margin-top:40px;margin-bottom:40px",
     };
 
     const buttonEl = isSubscribe
       ? ["div", { style: "display:flex;align-items:center;background:#ffffff;border-radius:50px;overflow:hidden;max-width:420px;margin:0 auto" },
-          ["input", { type: "email", placeholder: inputPlaceholder, style: "flex:1;padding:14px 20px;font-size:14px;outline:none;border:none;background:transparent;color:#666;min-width:0" }],
-          ["button", { type: "submit", style: "background:#F15C20;color:#ffffff;padding:14px 24px;border-radius:50px;border:none;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer;flex-shrink:0" }, buttonText],
-        ]
-      : ["div", { style: "display:inline-flex;align-items:center" },
-          ["a", { href: buttonHref, style: "display:inline-block;background:#ffffff;color:#F15C20;text-decoration:none;font-size:14px;font-weight:600;padding:15px 32px;border-radius:50px 0 0 50px;white-space:nowrap;line-height:1.2;min-width:160px" }, buttonText],
-          ["span", { "aria-hidden": "true", style: "display:inline-flex;align-items:center;justify-content:center;background:#ffffff;color:#F15C20;width:52px;height:52px;border-radius:50%;flex-shrink:0;font-size:20px" }, "↗"],
-        ];
+        ["input", { type: "email", placeholder: inputPlaceholder, style: "flex:1;padding:14px 20px;font-size:14px;outline:none;border:none;background:transparent;color:#666;min-width:0" }],
+        ["button", { type: "submit", style: "background:#F15C20;color:#ffffff;padding:14px 24px;border-radius:50px;border:none;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer;flex-shrink:0" }, buttonText],
+      ]
+      : ["div", { style: "display:inline-flex;align-items:center;gap:0px" },
+        ["a", { href: buttonHref, style: "display:inline-flex;align-items:center;justify-content:center;background:#ffffff;color:#F15C20;text-decoration:none;font-size:14px;font-weight:600;padding:0 32px;border-radius:50px;white-space:nowrap;line-height:1;min-width:160px;height:52px;box-sizing:border-box" }, buttonText],
+        ["a", { href: buttonHref, style: "display:inline-flex;align-items:center;justify-content:center;background:#ffffff;color:#F15C20;text-decoration:none;width:52px;height:52px;border-radius:50px;flex-shrink:0;box-sizing:border-box" },
+          ["svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", class: "lucide lucide-arrow-up-right-icon lucide-arrow-up-right" },
+            ["path", { d: "M7 7h10v10" }],
+            ["path", { d: "M7 17 17 7" }]
+          ]
+        ],
+      ];
 
     return [
       "div", base,
-      ["h2", { style: "margin:0 0 14px;font-size:30px;font-weight:700;line-height:1.25;color:#ffffff;word-break:break-word;overflow-wrap:break-word;text-align:left" }, heading],
-      ["p",  { style: "margin:0 0 28px;font-size:15px;color:rgba(255,255,255,0.92);line-height:1.5;word-break:break-word;overflow-wrap:break-word" }, paragraph],
+      ["h2", { style: "margin:0 0 14px;font-size:30px;font-weight:700;line-height:1.25;color:#ffffff;word-break:break-word;overflow-wrap:break-word;text-align:center" }, heading],
+      ["p", { style: "margin:0 0 28px;font-size:15px;color:rgba(255,255,255,0.92);line-height:1.5;word-break:break-word;overflow-wrap:break-word" }, paragraph],
       buttonEl,
     ];
   },
@@ -248,12 +253,12 @@ function ImageNodeView({ node, updateAttributes, selected }: any) {
     maxWidth: "100%",
     position: "relative",
     ...(align === "center" ? { marginLeft: "auto", marginRight: "auto" } :
-        align === "right"  ? { marginLeft: "auto", marginRight: "0" } :
-                             { marginLeft: "0", marginRight: "auto" }),
+      align === "right" ? { marginLeft: "auto", marginRight: "0" } :
+        { marginLeft: "0", marginRight: "auto" }),
   };
 
   return (
-    <NodeViewWrapper contentEditable={false} className="my-2">
+    <NodeViewWrapper contentEditable={false} className="mt-2 mb-8">
       <div
         ref={containerRef}
         style={containerStyle}
@@ -364,10 +369,9 @@ const CustomImage = Image.extend({
     const width = (node.attrs.width as string) ?? "100%";
     const alt = (node.attrs.alt as string) ?? "";
     const { align: _a, width: _w, alt: _alt, ...rest } = HTMLAttributes;
-    const style = `display:block;width:${width};max-width:100%;${
-      align === "center" ? "margin:0 auto;" :
-      align === "right"  ? "margin-left:auto;margin-right:0;" : ""
-    }`;
+    const style = `display:block;width:${width};max-width:100%;margin-bottom:32px;${align === "center" ? "margin-left:auto;margin-right:auto;margin-top:8px;" :
+        align === "right" ? "margin-left:auto;margin-right:0;margin-top:8px;" : "margin-top:8px;"
+      }`;
     return ["img", { ...rest, alt, "data-align": align, "data-width": width, style }];
   },
   addNodeView() {
@@ -392,9 +396,8 @@ function ToolbarButton({
       type="button"
       onMouseDown={(e) => { e.preventDefault(); onClick(); }}
       title={title}
-      className={`p-1.5 rounded text-sm transition-colors ${
-        active ? "bg-[#F15C20] text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-      }`}
+      className={`p-1.5 rounded text-sm transition-colors ${active ? "bg-[#F15C20] text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        }`}
     >
       {children}
     </button>
@@ -646,8 +649,8 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
         <Divider />
 
-        {/* Headings H1–H6 */}
-        {([1, 2, 3, 4, 5, 6] as const).map((level) => (
+        {/* Headings H2–H6 */}
+        {([2, 3, 4, 5, 6] as const).map((level) => (
           <ToolbarButton
             key={level}
             onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
@@ -789,9 +792,8 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
             type="button"
             onClick={(e) => { e.preventDefault(); handleLinkButtonClick(); }}
             title={editor.isActive("link") ? "Open / edit link" : "Insert link"}
-            className={`p-1.5 rounded text-sm transition-colors ${
-              editor.isActive("link") ? "bg-[#F15C20] text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
+            className={`p-1.5 rounded text-sm transition-colors ${editor.isActive("link") ? "bg-[#F15C20] text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              }`}
           >
             <FiLink size={14} />
           </button>
