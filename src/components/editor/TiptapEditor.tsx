@@ -22,7 +22,7 @@ import {
 } from "react-icons/fi";
 import {
   MdFormatListNumbered, MdFormatQuote, MdStrikethroughS,
-  MdTableChart, MdUndo, MdRedo,
+  MdTableChart, MdUndo, MdRedo, MdFormatClear,
 } from "react-icons/md";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
@@ -464,7 +464,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     onUpdate({ editor }) {
       onChange(editor.getJSON(), editor.getHTML());
     },
-    onSelectionUpdate() {
+    onTransaction() {
       setSelTick((t) => t + 1);
     },
     editorProps: {
@@ -752,6 +752,9 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         </ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive("code")} title="Inline code">
           <FiCode size={14} />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()} title="Clear formatting">
+          <MdFormatClear size={14} />
         </ToolbarButton>
 
         <Divider />
