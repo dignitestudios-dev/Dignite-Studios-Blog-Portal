@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
 import { TiptapEditor } from "@/components/editor/TiptapEditor";
@@ -240,16 +240,26 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
     }
   }, [title, featuredImage.url, buildPayload, postId, router]);
 
+  const latestSave = useRef(save);
+  const latestTitle = useRef(title);
+  const latestFeaturedImage = useRef(featuredImage.url);
+
+  useEffect(() => {
+    latestSave.current = save;
+    latestTitle.current = title;
+    latestFeaturedImage.current = featuredImage.url;
+  }, [save, title, featuredImage.url]);
+
   // Auto-save interval every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       // Only auto-save if title and featured image are present
-      if (title.trim() && featuredImage.url.trim()) {
-        save("draft", true);
+      if (latestTitle.current.trim() && latestFeaturedImage.current.trim()) {
+        latestSave.current("draft", true);
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [save, title, featuredImage.url]);
+  }, []);
 
   // Update time since save text every second
   useEffect(() => {
