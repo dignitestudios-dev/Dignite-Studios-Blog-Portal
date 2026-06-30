@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { FiFileText, FiTag, FiLogOut, FiPlusCircle, FiBook, FiUser } from "react-icons/fi";
+import { FiFileText, FiTag, FiLogOut, FiPlusCircle, FiBook, FiUser, FiSettings } from "react-icons/fi";
 import { MdDashboard } from "react-icons/md";
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/dashboard/posts/new", label: "New Post", icon: FiPlusCircle, exact: false },
   { href: "/dashboard/categories", label: "Categories", icon: FiTag, exact: false },
   { href: "/dashboard/guide", label: "User Guide", icon: FiBook, exact: false },
+  { href: "/dashboard/settings", label: "Settings", icon: FiSettings, exact: false },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

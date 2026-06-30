@@ -82,6 +82,10 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
     return { words, chars, paragraphs, headings };
   }, [contentHtml]);
 
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [timeSinceSave, setTimeSinceSave] = useState<string>("");
+
   const [readTimeOverride, setReadTimeOverride] = useState<number | null>(null);
   // Better read-time: 238 WPM + 12s per image + 30s per code block
   const autoReadTime = useMemo(() => {
@@ -156,7 +160,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
     }
   }
 
-  function buildPayload(overrideStatus?: "draft" | "published") {
+  const buildPayload = useCallback((overrideStatus?: "draft" | "published") => {
     const finalStatus = overrideStatus ?? status;
     const tagsArray = tags
       .split(",")
@@ -188,18 +192,21 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
         seoChecks: analysis.checks,
       },
     };
-  }
+  }, [title, slug, content, contentHtml, excerpt, featuredImage, categories, tags, author, status, readTime, seo, analysis]);
 
-  async function save(overrideStatus?: "draft" | "published") {
+  const save = useCallback(async (overrideStatus?: "draft" | "published", isAutoSave = false) => {
     if (!title.trim()) {
-      setToast({ msg: "Please add a title before saving.", type: "error" });
+      if (!isAutoSave) setToast({ msg: "Please add a title before saving.", type: "error" });
       return;
     }
     if (!featuredImage.url.trim()) {
-      setToast({ msg: "Featured image is required.", type: "error" });
+      if (!isAutoSave) setToast({ msg: "Featured image is required.", type: "error" });
       return;
     }
-    setSaving(true);
+    
+    if (isAutoSave) setAutoSaving(true);
+    else setSaving(true);
+    
     const payload = buildPayload(overrideStatus);
 
     const res = postId
@@ -214,18 +221,51 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
           body: JSON.stringify(payload),
         });
 
-    setSaving(false);
+    if (isAutoSave) setAutoSaving(false);
+    else setSaving(false);
 
     if (res.ok) {
       const data = await res.json();
-      setToast({ msg: `Post ${overrideStatus === "published" ? "published" : "saved"}!`, type: "success" });
+      setLastSavedAt(new Date());
+      if (!isAutoSave) {
+        setToast({ msg: `Post ${overrideStatus === "published" ? "published" : "saved"}!`, type: "success" });
+      }
       if (!postId) {
         router.replace(`/dashboard/posts/${data._id}`);
       }
     } else {
-      setToast({ msg: "Failed to save. Please try again.", type: "error" });
+      if (!isAutoSave) {
+        setToast({ msg: "Failed to save. Please try again.", type: "error" });
+      }
     }
-  }
+  }, [title, featuredImage.url, buildPayload, postId, router]);
+
+  // Auto-save interval every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Only auto-save if title and featured image are present
+      if (title.trim() && featuredImage.url.trim()) {
+        save("draft", true);
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [save, title, featuredImage.url]);
+
+  // Update time since save text every second
+  useEffect(() => {
+    if (!lastSavedAt) return;
+    
+    const updateText = () => {
+      const diff = Math.floor((Date.now() - lastSavedAt.getTime()) / 1000);
+      if (diff < 5) setTimeSinceSave("Saved just now");
+      else if (diff < 60) setTimeSinceSave(`Saved ${diff} seconds ago`);
+      else setTimeSinceSave(`Saved ${Math.floor(diff / 60)} minutes ago`);
+    };
+    
+    updateText();
+    const interval = setInterval(updateText, 1000);
+    return () => clearInterval(interval);
+  }, [lastSavedAt]);
 
   const statusColors: Record<string, string> = {
     published: "bg-emerald-100 text-emerald-700",
@@ -251,6 +291,14 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
         </p>
 
         <div className="hidden md:flex items-center gap-3 text-xs text-gray-400 shrink-0">
+          {(autoSaving || timeSinceSave) && (
+            <>
+              <span className="text-gray-400 italic">
+                {autoSaving ? "Saving..." : timeSinceSave}
+              </span>
+              <span className="text-gray-200">·</span>
+            </>
+          )}
           <span>{stats.words.toLocaleString()} words</span>
           <span className="text-gray-200">·</span>
           <span>{readTime} min read</span>
