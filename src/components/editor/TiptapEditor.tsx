@@ -463,8 +463,9 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     content: Object.keys(content).length > 0 ? content : "",
     onUpdate({ editor }) {
       onChange(editor.getJSON(), editor.getHTML());
+      setSelTick((t) => t + 1);
     },
-    onTransaction() {
+    onSelectionUpdate() {
       setSelTick((t) => t + 1);
     },
     editorProps: {
@@ -657,7 +658,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
             active={editor.isActive("heading", { level })}
             title={`Heading ${level}`}
           >
-            <span className="text-xs font-bold">H{level}</span>
+            <span className="text-xs font-medium">H{level}</span>
           </ToolbarButton>
         ))}
 
