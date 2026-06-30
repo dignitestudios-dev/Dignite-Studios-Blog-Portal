@@ -26,12 +26,20 @@ export const authConfig = {
       if (isDashboard) return isLoggedIn;
       return true;
     },
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) token.role = (user as { role?: string }).role;
+      if (trigger === "update" && session?.name) {
+        token.name = session.name;
+      }
       return token;
     },
     session({ session, token }) {
-      if (session.user) (session.user as { role?: string }).role = token.role as string;
+      if (session.user) {
+        (session.user as { role?: string }).role = token.role as string;
+        if (token.name) {
+          session.user.name = token.name;
+        }
+      }
       return session;
     },
   },
