@@ -97,8 +97,24 @@ function buildSchema(f: SchemaFields): Record<string, unknown> {
     if (f.publisherLogoUrl) pub.logo = { "@type": "ImageObject", url: f.publisherLogoUrl };
     s.publisher = pub;
   }
-  if (f.datePublished) s.datePublished = f.datePublished;
-  if (f.dateModified) s.dateModified = f.dateModified;
+
+  const toIsoDate = (d?: string) => {
+    if (!d) return undefined;
+    try {
+      const dateObj = new Date(d);
+      if (!isNaN(dateObj.getTime())) {
+        return dateObj.toISOString();
+      }
+    } catch {}
+    return d;
+  };
+
+  const pubDate = toIsoDate(f.datePublished);
+  if (pubDate) s.datePublished = pubDate;
+  
+  const modDate = toIsoDate(f.dateModified);
+  if (modDate) s.dateModified = modDate;
+  
   return s;
 }
 
@@ -154,6 +170,17 @@ export function SchemaGenerator({
   const websiteUrl = "https://dignitestudios.com";
 
   function initFields(): SchemaFields {
+    const getFormatDate = (val?: string) => {
+      if (!val) return "";
+      try {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return "";
+        return d.toISOString().split("T")[0];
+      } catch {
+        return "";
+      }
+    };
+
     if (initialJsonLd) {
       try {
         const p = JSON.parse(initialJsonLd);
@@ -168,8 +195,8 @@ export function SchemaGenerator({
           authorUrl: p.author?.url ?? "",
           publisher: p.publisher?.name ?? "Dignite Studios",
           publisherLogoUrl: p.publisher?.logo?.url ?? "https://dignitestudios.com/logo.png",
-          datePublished: p.datePublished || (createdAt ? new Date(createdAt).toISOString().split("T")[0] : ""),
-          dateModified: p.dateModified || (updatedAt ? new Date(updatedAt).toISOString().split("T")[0] : ""),
+          datePublished: getFormatDate(p.datePublished || createdAt),
+          dateModified: getFormatDate(p.dateModified || updatedAt),
         };
       } catch { /* fall through */ }
     }
@@ -180,8 +207,8 @@ export function SchemaGenerator({
       imageUrl: featuredImageUrl,
       description: excerpt,
       authorName,
-      datePublished: createdAt ? new Date(createdAt).toISOString().split("T")[0] : "",
-      dateModified: updatedAt ? new Date(updatedAt).toISOString().split("T")[0] : "",
+      datePublished: getFormatDate(createdAt),
+      dateModified: getFormatDate(updatedAt),
     };
   }
 
