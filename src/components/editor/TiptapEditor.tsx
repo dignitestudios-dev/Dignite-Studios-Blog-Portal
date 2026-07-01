@@ -463,10 +463,6 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     content: Object.keys(content).length > 0 ? content : "",
     onUpdate({ editor }) {
       onChange(editor.getJSON(), editor.getHTML());
-      setSelTick((t) => t + 1);
-    },
-    onSelectionUpdate() {
-      setSelTick((t) => t + 1);
     },
     editorProps: {
       attributes: {
@@ -485,6 +481,18 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       editor.commands.setContent(content);
     }
   }, [content, editor]);
+
+  // Bulletproof state synchronization for toolbar updates
+  useEffect(() => {
+    if (!editor) return;
+    const handleTransaction = () => {
+      setSelTick((t) => t + 1);
+    };
+    editor.on("transaction", handleTransaction);
+    return () => {
+      editor.off("transaction", handleTransaction);
+    };
+  }, [editor]);
 
   // Close color panel on outside click
   useEffect(() => {
