@@ -396,8 +396,11 @@ function ToolbarButton({
       type="button"
       onMouseDown={(e) => { e.preventDefault(); onClick(); }}
       title={title}
-      className={`p-1.5 rounded text-sm transition-colors ${active ? "bg-[#F15C20] text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-        }`}
+      className={`p-1.5 flex items-center justify-center rounded text-sm transition-all ${
+        active 
+          ? "bg-[#F15C20] text-white shadow-inner ring-2 ring-offset-1 ring-[#F15C20]/50" 
+          : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+      }`}
     >
       {children}
     </button>
@@ -463,6 +466,9 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     content: Object.keys(content).length > 0 ? content : "",
     onUpdate({ editor }) {
       onChange(editor.getJSON(), editor.getHTML());
+    },
+    onSelectionUpdate() {
+      setSelTick((t) => t + 1);
     },
     editorProps: {
       attributes: {
