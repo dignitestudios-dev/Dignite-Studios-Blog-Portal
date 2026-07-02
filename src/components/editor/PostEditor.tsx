@@ -2,7 +2,11 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
-import { TiptapEditor } from "@/components/editor/TiptapEditor";
+import dynamic from "next/dynamic";
+const EditorJsComponent = dynamic(() => import("@/components/editor/EditorJsComponent"), {
+  ssr: false,
+  loading: () => <div className="h-[400px] flex items-center justify-center border border-gray-200 rounded-xl bg-gray-50"><p className="text-gray-500">Loading editor...</p></div>
+});
 import { CategorySelect } from "@/components/editor/CategorySelect";
 import { FeaturedImageUpload } from "@/components/editor/FeaturedImageUpload";
 import { SeoData } from "@/components/seo/SeoSidebar";
@@ -371,7 +375,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
           {/* Editor card — fills remaining height, toolbar inside always visible */}
           <div className="flex-1 min-h-0 px-6 pb-5 pt-3 overflow-hidden">
             <div className="h-full bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-              <TiptapEditor content={content} onChange={handleContentChange} />
+              <EditorJsComponent content={content} onChange={handleContentChange} />
             </div>
           </div>
         </div>
