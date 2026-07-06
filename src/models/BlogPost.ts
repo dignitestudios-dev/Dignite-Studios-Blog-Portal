@@ -35,6 +35,8 @@ export interface IBlogPost extends Document {
   scheduledAt: Date | null;
   seo: ISeoData;
   readTime: number;
+  isTrashed: boolean;
+  trashedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -93,6 +95,8 @@ const BlogPostSchema = new Schema<IBlogPost>(
     scheduledAt: { type: Date, default: null },
     seo: { type: SeoSchema, default: () => ({}) },
     readTime: { type: Number, default: 1 },
+    isTrashed: { type: Boolean, default: false },
+    trashedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

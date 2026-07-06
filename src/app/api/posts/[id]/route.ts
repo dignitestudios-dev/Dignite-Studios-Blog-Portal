@@ -24,6 +24,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { auth } = await import("@/lib/auth");
+  const session = await auth();
+  const isEditor = (session?.user as any)?.role === "editor";
+
   const { id } = await params;
   await connectDB();
   const body = await req.json();
@@ -41,6 +45,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     body.publishedAt = new Date();
   }
 
+  // Role enforcement: editors cannot publish
+  if (isEditor && body.status === "published") {
+    body.status = "draft";
+    body.publishedAt = null;
+  }
+
   if (body.slug) {
     let slug = body.slug;
     let counter = 1;
@@ -55,22 +65,57 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   return NextResponse.json(post);
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await connectDB();
   const post = await BlogPost.findById(id).lean() as any;
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Collect all local image URLs to delete
-  const imageUrls: string[] = [];
-  if (post.featuredImage?.url) imageUrls.push(post.featuredImage.url);
-  if (post.contentHtml) {
-    const matches = post.contentHtml.matchAll(/src="(\/uploads\/[^"]+)"/g);
-    for (const m of matches) imageUrls.push(m[1]);
-  }
+  const url = new URL(req.url);
+  const isPermanent = url.searchParams.get("permanent") === "true";
 
-  await BlogPost.findByIdAndDelete(id);
-  await Promise.all(imageUrls.map(deleteLocalImage));
+  const { auth } = await import("@/lib/auth");
+  const session = await auth();
+  const userName = session?.user?.name || session?.user?.email || "Unknown User";
+
+  if (isPermanent) {
+    if ((session?.user as any)?.role === "editor") {
+      return NextResponse.json({ error: "Editors cannot permanently delete posts" }, { status: 403 });
+    }
+
+    // Collect all local image URLs to delete
+    const imageUrls: string[] = [];
+    if (post.featuredImage?.url) imageUrls.push(post.featuredImage.url);
+    if (post.contentHtml) {
+      const matches = post.contentHtml.matchAll(/src="(\/uploads\/[^"]+)"/g);
+      for (const m of matches) imageUrls.push(m[1]);
+    }
+
+    await BlogPost.findByIdAndDelete(id);
+    await Promise.all(imageUrls.map(deleteLocalImage));
+    
+    // Log
+    const { ActivityLog } = await import("@/models/ActivityLog");
+    await ActivityLog.create({
+      action: "Delete Blog (Permanent)",
+      user: userName,
+      details: `Title: ${post.title} | Slug: ${post.slug}`,
+    });
+  } else {
+    await BlogPost.findByIdAndUpdate(
+      id, 
+      { $set: { isTrashed: true, trashedAt: new Date(), status: "draft" } }, 
+      { new: true, strict: false }
+    );
+    
+    // Log
+    const { ActivityLog } = await import("@/models/ActivityLog");
+    await ActivityLog.create({
+      action: "Delete Blog (Trashed)",
+      user: userName,
+      details: `Title: ${post.title} | Slug: ${post.slug}`,
+    });
+  }
 
   return NextResponse.json({ success: true });
 }

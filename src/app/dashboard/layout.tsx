@@ -7,12 +7,13 @@ import { FiFileText, FiTag, FiLogOut, FiPlusCircle, FiBook, FiUser, FiSettings }
 import { MdDashboard } from "react-icons/md";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: MdDashboard, exact: true },
-  { href: "/dashboard/posts", label: "All Posts", icon: FiFileText, exact: true },
-  { href: "/dashboard/posts/new", label: "New Post", icon: FiPlusCircle, exact: false },
-  { href: "/dashboard/categories", label: "Categories", icon: FiTag, exact: false },
-  { href: "/dashboard/guide", label: "User Guide", icon: FiBook, exact: false },
-  { href: "/dashboard/settings", label: "Settings", icon: FiSettings, exact: false },
+  { href: "/dashboard", label: "Dashboard", icon: MdDashboard, exact: true, role: "all" },
+  { href: "/dashboard/posts", label: "All Posts", icon: FiFileText, exact: true, role: "all" },
+  { href: "/dashboard/posts/new", label: "New Post", icon: FiPlusCircle, exact: false, role: "all" },
+  { href: "/dashboard/categories", label: "Categories", icon: FiTag, exact: false, role: "all" },
+  { href: "/dashboard/guide", label: "User Guide", icon: FiBook, exact: false, role: "all" },
+  { href: "/dashboard/users", label: "Users", icon: FiUser, exact: false, role: "admin" },
+  { href: "/dashboard/settings", label: "Settings", icon: FiSettings, exact: false, role: "all" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -37,7 +38,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map(({ href, label, icon: Icon, exact }) => {
+          {navItems.map(({ href, label, icon: Icon, exact, role }) => {
+            const userRole = (session?.user as { role?: string })?.role || "admin";
+            if (role !== "all" && role !== userRole) return null;
+
             const isActive = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link

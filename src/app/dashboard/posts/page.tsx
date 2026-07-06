@@ -51,7 +51,7 @@ export default function PostsPage() {
 
   async function fetchPosts(s: string) {
     setLoading(true);
-    const res = await fetch(`/api/posts?status=${s}&limit=50`);
+    const res = await fetch(`/api/posts?status=${s}&limit=50`, { cache: "no-store" });
     const data = await res.json();
     setPosts(data.posts ?? []);
     setLoading(false);
@@ -222,9 +222,9 @@ export default function PostsPage() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete post?</AlertDialogTitle>
+            <AlertDialogTitle>Move post to trash?</AlertDialogTitle>
             <AlertDialogDescription>
-              &ldquo;{deleteTarget?.title}&rdquo; will be permanently deleted. This cannot be undone.
+              &ldquo;{deleteTarget?.title}&rdquo; will be moved to the trash and its status will be changed to draft.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -242,7 +242,7 @@ export default function PostsPage() {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
               )}
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? "Moving..." : "Move to Trash"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

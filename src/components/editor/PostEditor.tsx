@@ -2,11 +2,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
-import dynamic from "next/dynamic";
-const EditorJsComponent = dynamic(() => import("@/components/editor/EditorJsComponent"), {
-  ssr: false,
-  loading: () => <div className="h-[400px] flex items-center justify-center border border-gray-200 rounded-xl bg-gray-50"><p className="text-gray-500">Loading editor...</p></div>
-});
+import { TiptapEditor } from "@/components/editor/TiptapEditor";
 import { CategorySelect } from "@/components/editor/CategorySelect";
 import { FeaturedImageUpload } from "@/components/editor/FeaturedImageUpload";
 import { SeoData } from "@/components/seo/SeoSidebar";
@@ -37,6 +33,8 @@ const DEFAULT_SEO: SeoData = {
   jsonLd: "",
 };
 
+import { useSession } from "next-auth/react";
+
 interface PostEditorProps {
   initialPost?: Record<string, unknown>;
   postId?: string;
@@ -44,6 +42,9 @@ interface PostEditorProps {
 
 export function PostEditor({ initialPost, postId }: PostEditorProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isEditor = (session?.user as { role?: string })?.role === "editor";
+
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
 
@@ -375,7 +376,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
           {/* Editor card — fills remaining height, toolbar inside always visible */}
           <div className="flex-1 min-h-0 px-6 pb-5 pt-3 overflow-hidden">
             <div className="h-full bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-              <EditorJsComponent content={content} onChange={handleContentChange} />
+              <TiptapEditor content={content} onChange={handleContentChange} />
             </div>
           </div>
         </div>
@@ -406,11 +407,15 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as "draft" | "published")}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#F15C20] focus:ring-1 focus:ring-[#F15C20] bg-white"
+                disabled={isEditor}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#F15C20] focus:ring-1 focus:ring-[#F15C20] bg-white disabled:bg-gray-100 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <option value="draft">Draft</option>
-                <option value="published">Published</option>
+                {!isEditor && <option value="published">Published</option>}
               </select>
+              {isEditor && (
+                <p className="mt-1 text-[10px] text-amber-600">Editors can only save as draft.</p>
+              )}
             </div>
 
             <div className="space-y-2">
