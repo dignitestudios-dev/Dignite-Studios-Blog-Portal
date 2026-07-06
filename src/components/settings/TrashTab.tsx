@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { FiTrash2, FiRotateCcw, FiRefreshCw, FiLoader } from "react-icons/fi";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,9 +69,14 @@ export function TrashTab() {
         cachedTrashPosts = updated;
         setTrashedPosts(updated);
         setConfirmRestoreId(null);
+        toast.success("Post restored successfully");
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to restore post");
       }
     } catch (err) {
       console.error(err);
+      toast.error("An error occurred");
     } finally {
       setIsRestoring(false);
     }
@@ -79,7 +85,7 @@ export function TrashTab() {
   const deletePermanently = async () => {
     if (!confirmDeleteId) return;
     if (deleteInput !== "DELETE") {
-      alert("You must type 'DELETE' exactly.");
+      toast.error("You must type 'DELETE' exactly.");
       return;
     }
     setIsDeleting(true);
@@ -91,9 +97,14 @@ export function TrashTab() {
         setTrashedPosts(updated);
         setConfirmDeleteId(null);
         setDeleteInput("");
+        toast.success("Post deleted permanently");
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to delete post");
       }
     } catch (err) {
       console.error(err);
+      toast.error("An error occurred");
     } finally {
       setIsDeleting(false);
     }
@@ -136,7 +147,9 @@ export function TrashTab() {
                   <div className="text-gray-400 text-xs mt-0.5">/blog/{post.slug}</div>
                 </td>
                 <td className="px-6 py-4 text-gray-500">
-                  {post.trashedAt ? new Date(post.trashedAt).toLocaleDateString() : "Unknown"}
+                  {post.trashedAt 
+                    ? new Date(post.trashedAt).toLocaleDateString() 
+                    : new Date((post as any).updatedAt || post.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-end gap-3">

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { FiPlusCircle, FiEdit, FiTrash2, FiCopy, FiLoader } from "react-icons/fi";
 import {
   AlertDialog,
@@ -62,10 +63,21 @@ export default function PostsPage() {
   async function confirmDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
-    await fetch(`/api/posts/${deleteTarget.id}`, { method: "DELETE" });
-    setPosts((prev) => prev.filter((p) => p._id !== deleteTarget.id));
-    setDeleting(false);
-    setDeleteTarget(null);
+    try {
+      const res = await fetch(`/api/posts/${deleteTarget.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const error = await res.json();
+        toast.error(error.error || "Failed to move post to trash");
+        return;
+      }
+      setPosts((prev) => prev.filter((p) => p._id !== deleteTarget.id));
+      toast.success("Post moved to trash");
+    } catch (err) {
+      toast.error("Something went wrong");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   }
 
   async function handleDuplicate(id: string) {

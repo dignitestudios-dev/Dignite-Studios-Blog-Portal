@@ -68,7 +68,10 @@ export default function UsersPage() {
     try {
       const res = await fetch("/api/users", { cache: "no-store" });
       const data = await res.json();
-      if (data.users) setUsers(data.users);
+      if (data.users) {
+        const currentUserEmail = (session?.user as any)?.email;
+        setUsers(data.users.filter((u: User) => u.email !== currentUserEmail));
+      }
     } catch (err) {
       console.error(err);
     } finally {

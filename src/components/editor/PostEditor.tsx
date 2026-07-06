@@ -420,11 +420,11 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
 
             <div className="space-y-2">
               <button
-                onClick={() => save(status)}
+                onClick={() => save(isEditor ? "draft" : status)}
                 disabled={saving}
                 className="w-full py-2 bg-[#F15C20] hover:bg-[#d94d17] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
               >
-                {saving ? "Saving…" : "Save"}
+                {saving ? "Saving…" : (isEditor ? "Save as Draft" : "Save")}
               </button>
               {slug && (
                 <a

@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Toaster } from "sonner";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -28,6 +29,7 @@ export default function RootLayout({
         <SessionProvider>
           <TooltipProvider>
             {children}
+            <Toaster position="top-center" richColors />
           </TooltipProvider>
         </SessionProvider>
       </body>
