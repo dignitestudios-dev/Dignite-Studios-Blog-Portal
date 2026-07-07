@@ -298,3 +298,91 @@ body {
     @apply font-sans;
   }
 }
+
+/* Editor.js custom styles */
+.codex-editor__redactor {
+  padding-bottom: 100px !important;
+}
+.ce-block__content,
+.ce-toolbar__content {
+  max-width: 800px !important;
+}
+.cdx-block {
+  padding: 0.4em 0;
+}
+.ce-header {
+  font-weight: 700;
+  color: #111827;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+.cdx-marker {
+  background: rgba(241, 92, 32, 0.2);
+  padding: 0 4px;
+  border-radius: 2px;
+}
+.ce-paragraph {
+  line-height: 1.7;
+  color: #374151;
+}
+.cdx-quote {
+  border-left: 3px solid #F15C20;
+  padding-left: 1rem;
+  color: #6b7280;
+  margin: 1.5rem 0;
+  font-style: italic;
+}
+.ce-block--selected .ce-block__content {
+  background: rgba(241, 92, 32, 0.05) !important;
+}
+.editor-js-container a {
+  color: #F15C20;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.editor-js-container a:hover {
+  color: #d84e18;
+}
+.editor-js-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+.editor-js-container td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+.editor-js-container blockquote {
+  border-left: 3px solid #F15C20;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #6b7280;
+  margin: 1.5rem 0;
+}
+.editor-js-container pre {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.editor-js-container code {
+  background: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: monospace;
+}
+.editor-js-container pre code {
+  background: transparent;
+  padding: 0;
+}
+.ce-inline-tool-input {
+  border-radius: 6px !important;
+  border: 1px solid #e5e7eb !important;
+}
+.ce-inline-tool-input:focus {
+  border-color: #F15C20 !important;
+  box-shadow: 0 0 0 1px #F15C20 !important;
+}
