@@ -321,6 +321,45 @@ class CustomImageTool implements BlockTool {
   }
 }
 
+class ClearFormatTool {
+  static get isInline() {
+    return true;
+  }
+
+  get shortcut() {
+    return 'CMD+SHIFT+C';
+  }
+
+  get title() {
+    return 'Clear Formatting';
+  }
+
+  private button: HTMLButtonElement | null = null;
+  private api: any;
+
+  constructor({ api }: any) {
+    this.api = api;
+  }
+
+  render() {
+    this.button = document.createElement('button');
+    this.button.type = 'button';
+    this.button.className = 'ce-inline-tool clear-format-inline-button';
+    // Use an icon representing clean/strip format (eraser or clean formatting)
+    this.button.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20H6M14.5 4L20 9.5M19 14.5L14.5 19L5 9.5L9.5 5L19 14.5Z"/></svg>`;
+    return this.button;
+  }
+
+  surround(range: Range) {
+    if (!range) return;
+    document.execCommand('removeFormat');
+  }
+
+  checkState() {
+    return false;
+  }
+}
+
 // ─── Tiptap to EditorJS Converter ───────────────────────────────────────────
 function convertTiptapToEditorJs(tiptap: any): any {
   if (!tiptap || typeof tiptap !== "object") return { blocks: [] };
@@ -595,6 +634,9 @@ export default function EditorJsComponent({ content, onChange }: EditorJsCompone
           embed: Embed as any,
           marker: Marker as any,
           delimiter: Delimiter as any,
+          clearFormat: {
+            class: ClearFormatTool as any,
+          },
         },
         onChange: async () => {
           if (!editorRef.current) return;
