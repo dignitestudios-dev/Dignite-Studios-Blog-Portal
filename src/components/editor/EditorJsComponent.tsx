@@ -533,6 +533,33 @@ export default function EditorJsComponent({ content, onChange }: EditorJsCompone
               defaultLevel: 2,
             },
             inlineToolbar: true,
+            toolbox: [
+              {
+                icon: '<span class="text-xs font-bold font-mono">H2</span>',
+                title: 'Heading 2',
+                data: { level: 2 }
+              },
+              {
+                icon: '<span class="text-xs font-bold font-mono">H3</span>',
+                title: 'Heading 3',
+                data: { level: 3 }
+              },
+              {
+                icon: '<span class="text-xs font-bold font-mono">H4</span>',
+                title: 'Heading 4',
+                data: { level: 4 }
+              },
+              {
+                icon: '<span class="text-xs font-bold font-mono">H5</span>',
+                title: 'Heading 5',
+                data: { level: 5 }
+              },
+              {
+                icon: '<span class="text-xs font-bold font-mono">H6</span>',
+                title: 'Heading 6',
+                data: { level: 6 }
+              }
+            ]
           },
           list: {
             class: List as any,
