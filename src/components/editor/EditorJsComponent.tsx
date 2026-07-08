@@ -497,6 +497,26 @@ export default function EditorJsComponent({ content, onChange }: EditorJsCompone
   const isReady = useRef(false);
 
   useEffect(() => {
+    // Append SVG sprite sheet for editorjs-hyperlink icons
+    const spriteId = "editorjs-hyperlink-sprite";
+    let sprite = document.getElementById(spriteId);
+    if (!sprite) {
+      sprite = document.createElement("div");
+      sprite.id = spriteId;
+      sprite.style.display = "none";
+      sprite.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg">
+          <symbol id="link" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+          </symbol>
+          <symbol id="unlink" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M17 7h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1 0 1.43-.96 2.63-2.27 2.98l1.42 1.42c1.64-.78 2.85-2.43 2.85-4.4 0-2.76-2.24-5-5-5zM2 4.27l3.11 3.11C3.89 8.08 3 9.4 3 11c0 2.76 2.24 5 5 5h4v-1.9H8c-1.71 0-3.1-1.39-3.1-3.1 0-.96.44-1.81 1.13-2.39l2.39 2.39h-.42v2h2v-2h-.01l6.19 6.19 1.27-1.27L3.27 3 2 4.27zM8 12.8v-2h2.2l2 2H8z"/>
+          </symbol>
+        </svg>
+      `;
+      document.body.appendChild(sprite);
+    }
+
     if (!editorRef.current && containerRef.current) {
       // Handle legacy Tiptap JSON content converting
       const initialData = convertTiptapToEditorJs(content);
