@@ -386,3 +386,41 @@ body {
   border-color: #F15C20 !important;
   box-shadow: 0 0 0 1px #F15C20 !important;
 }
+
+/* Editor.js active/primary button overrides to match brand orange */
+.ce-inline-tool--active {
+  color: #F15C20 !important;
+}
+.ce-inline-tool-input__button {
+  background-color: #F15C20 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+}
+.ce-inline-tool-input__button:hover {
+  background-color: #d84e18 !important;
+}
+
+/* Input elements border focus */
+.ce-inline-tool-input__text:focus,
+.ce-inline-tool-input__target:focus,
+.ce-inline-tool-input__rel:focus {
+  border-color: #F15C20 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 1px #F15C20 !important;
+}
+
+/* Make image uploader button and other block uploader buttons highlight orange on hover */
+.custom-image-block button:not([disabled]):hover {
+  border-color: #F15C20 !important;
+  color: #F15C20 !important;
+}
+
+/* Styled active state for uploader icon */
+.custom-image-block button span.animate-spin {
+  color: #F15C20 !important;
+}
