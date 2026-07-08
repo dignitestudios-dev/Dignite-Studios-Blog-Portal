@@ -438,12 +438,15 @@ function convertTiptapToEditorJs(tiptap: any): any {
           }
         });
       } else if (node.type === "table") {
+        const firstRow = node.content?.[0];
+        const withHeadings = firstRow?.content?.[0]?.type === "tableHeader";
         const contentMatrix = (node.content || []).map((row: any) => {
           return (row.content || []).map((cell: any) => parseInline(cell.content));
         });
         blocks.push({
           type: "table",
           data: {
+            withHeadings,
             content: contentMatrix
           }
         });
@@ -515,10 +518,21 @@ const edjsParser = editorjsHtml({
     }`;
     return `<img src="${url}" alt="${resolvedAlt}" data-align="${resolvedAlign}" data-width="${resolvedWidth}" style="${style}" />`;
   },
+  quote: (block: any) => {
+    const { text, caption } = block.data;
+    const captionHtml = caption ? ` <cite>— ${caption}</cite>` : "";
+    return `<blockquote>${text}${captionHtml}</blockquote>`;
+  },
   table: (block: any) => {
     const content = block.data.content || [];
-    const rows = content.map((row: string[]) => {
-      const cells = row.map((cell: string) => `<td style="border:1px solid #e2e8f0;padding:8px 12px">${cell}</td>`).join("");
+    const withHeadings = block.data.withHeadings;
+    const rows = content.map((row: string[], rowIndex: number) => {
+      const cells = row.map((cell: string) => {
+        if (withHeadings && rowIndex === 0) {
+          return `<th style="border:1px solid #e2e8f0;padding:8px 12px;background:#f9fafb;font-weight:600">${cell}</th>`;
+        }
+        return `<td style="border:1px solid #e2e8f0;padding:8px 12px">${cell}</td>`;
+      }).join("");
       return `<tr>${cells}</tr>`;
     }).join("");
     return `<table style="width:100%;border-collapse:collapse;margin:20px 0">${rows}</table>`;
