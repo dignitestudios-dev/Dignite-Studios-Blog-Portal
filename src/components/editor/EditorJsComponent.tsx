@@ -56,6 +56,22 @@ class CtaBannerTool implements BlockTool {
     };
   }
 
+  static get conversionConfig() {
+    return {
+      export: (data: CtaBannerData) => {
+        return `${data.heading || ""}\n${data.paragraph || ""}`;
+      },
+      import: (string: string) => {
+        return {
+          heading: string,
+          paragraph: "",
+          buttonText: "Get Started Today",
+          buttonHref: "#"
+        };
+      }
+    };
+  }
+
   render(): HTMLElement {
     this.wrapper.className = "cta-banner-editor my-6 p-8 text-center text-white bg-[#F15C20] rounded-[20px] font-sans relative group";
     
@@ -155,6 +171,13 @@ class CustomImageTool implements BlockTool {
     return {
       title: 'Image (Custom)',
       icon: `<svg width="17" height="15" viewBox="0 0 17 15" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="16" height="14" rx="2.5" fill="none" stroke="currentColor"/><circle cx="5" cy="5" r="2" fill="currentColor"/><path d="M2 13 L8 7 L12 11 L15 8 L16.5 9.5" stroke="currentColor" stroke-linecap="round" fill="none"/></svg>`
+    };
+  }
+
+  static get conversionConfig() {
+    return {
+      export: 'url',
+      import: 'url'
     };
   }
 
