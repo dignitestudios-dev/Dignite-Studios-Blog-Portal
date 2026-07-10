@@ -263,14 +263,14 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
     latestFeaturedImage.current = featuredImage.url;
   }, [save, title, featuredImage.url]);
 
-  // Auto-save interval every 10 seconds
+  // Auto-save interval every 1 minute
   useEffect(() => {
     const interval = setInterval(() => {
       // Only auto-save if title and featured image are present
       if (latestTitle.current.trim() && latestFeaturedImage.current.trim()) {
         latestSave.current("draft", true);
       }
-    }, 10000);
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
