@@ -62,6 +62,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const post = await BlogPost.findByIdAndUpdate(id, body, { new: true, runValidators: true });
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Trigger On-Demand Revalidation on the website
+  try {
+    const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || "https://www.dignitestudios.com";
+    const secret = process.env.REVALIDATION_SECRET || "dignite-secret-2026";
+    fetch(`${websiteUrl}/api/revalidate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret, slug: post.slug })
+    }).catch(err => console.error("Revalidation failed:", err));
+  } catch (err) {
+    // Ignore fetch errors
+  }
+
   return NextResponse.json(post);
 }
 
@@ -113,6 +127,19 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         user: userName,
         details: `Title: ${post.title} | Slug: ${post.slug}`,
       });
+    }
+
+    // Trigger On-Demand Revalidation on the website
+    try {
+      const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || "https://www.dignitestudios.com";
+      const secret = process.env.REVALIDATION_SECRET || "dignite-secret-2026";
+      fetch(`${websiteUrl}/api/revalidate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret, slug: post.slug })
+      }).catch(err => console.error("Revalidation failed:", err));
+    } catch (err) {
+      // Ignore fetch errors
     }
 
     return NextResponse.json({ success: true });

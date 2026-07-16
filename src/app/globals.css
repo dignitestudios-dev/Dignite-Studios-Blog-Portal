@@ -310,6 +310,26 @@ body {
 .cdx-block {
   padding: 0.4em 0;
 }
+/* Fix double bullets in Editor.js */
+.editor-js-container .cdx-list {
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+.editor-js-container ul.cdx-list {
+  list-style-type: disc !important;
+}
+.editor-js-container ol.cdx-list {
+  list-style-type: decimal !important;
+}
+.editor-js-container .cdx-list__item {
+  display: list-item !important;
+}
+/* Hide Editor.js custom pseudo-element bullets to prevent double bullets */
+.editor-js-container .cdx-list__item::before,
+.editor-js-container .cdx-list__item::after {
+  display: none !important;
+  content: none !important;
+}
 .ce-header {
   font-weight: 700;
   color: #111827;

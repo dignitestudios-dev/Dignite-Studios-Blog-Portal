@@ -239,6 +239,9 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
 
     if (res.ok) {
       const data = await res.json();
+      if (overrideStatus) {
+        setStatus(overrideStatus);
+      }
       setLastSavedAt(new Date());
       if (!isAutoSave) {
         setToast({ msg: `Post ${overrideStatus === "published" ? "published" : "saved"}!`, type: "success" });
@@ -253,26 +256,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
     }
   }, [title, featuredImage.url, buildPayload, postId, router]);
 
-  const latestSave = useRef(save);
-  const latestTitle = useRef(title);
-  const latestFeaturedImage = useRef(featuredImage.url);
-
-  useEffect(() => {
-    latestSave.current = save;
-    latestTitle.current = title;
-    latestFeaturedImage.current = featuredImage.url;
-  }, [save, title, featuredImage.url]);
-
-  // Auto-save interval every 1 minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Only auto-save if title and featured image are present
-      if (latestTitle.current.trim() && latestFeaturedImage.current.trim()) {
-        latestSave.current("draft", true);
-      }
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
+  // Auto-save removed per user request
 
   // Update time since save text every second
   useEffect(() => {
@@ -333,11 +317,11 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => save("draft")}
+            onClick={() => save()}
             disabled={saving}
             className="px-4 py-1.5 text-sm font-medium border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
-            {saving ? "Saving…" : "Save Draft"}
+            {saving ? "Saving…" : "Save"}
           </button>
         </div>
       </header>

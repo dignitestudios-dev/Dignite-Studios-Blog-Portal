@@ -61,7 +61,7 @@ interface SchemaFields {
 }
 
 const EMPTY_FIELDS: SchemaFields = {
-  articleType: "BlogPosting",
+  articleType: "Article",
   headline: "",
   url: "",
   imageUrl: "",
@@ -78,7 +78,7 @@ const EMPTY_FIELDS: SchemaFields = {
 function buildSchema(f: SchemaFields): Record<string, unknown> {
   const s: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": f.articleType || "BlogPosting",
+    "@type": f.articleType || "Article",
   };
   if (f.headline) s.headline = f.headline;
   if (f.url) {
@@ -185,7 +185,7 @@ export function SchemaGenerator({
       try {
         const p = JSON.parse(initialJsonLd);
         return {
-          articleType: p["@type"] ?? "BlogPosting",
+          articleType: p["@type"] ?? "Article",
           headline: p.headline ?? postTitle,
           url: p.url ?? (postSlug ? `${websiteUrl}/blog/${postSlug}` : ""),
           imageUrl: (typeof p.image === "string" ? p.image : p.image?.url) ?? featuredImageUrl,
