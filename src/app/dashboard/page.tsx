@@ -7,11 +7,12 @@ import { FiPlusCircle, FiFileText, FiCheckCircle, FiClock } from "react-icons/fi
 
 async function getStats() {
   await connectDB();
+  const baseQuery = { isTrashed: { $ne: true } };
   const [total, published, drafts, scheduled] = await Promise.all([
-    BlogPost.countDocuments(),
-    BlogPost.countDocuments({ status: "published" }),
-    BlogPost.countDocuments({ status: "draft" }),
-    BlogPost.countDocuments({ status: "scheduled" }),
+    BlogPost.countDocuments(baseQuery),
+    BlogPost.countDocuments({ ...baseQuery, status: "published" }),
+    BlogPost.countDocuments({ ...baseQuery, status: "draft" }),
+    BlogPost.countDocuments({ ...baseQuery, status: "scheduled" }),
   ]);
   return { total, published, drafts, scheduled };
 }
