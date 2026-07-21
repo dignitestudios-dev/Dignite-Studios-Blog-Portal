@@ -3,18 +3,17 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import BlogPost from "@/models/BlogPost";
-import { FiPlusCircle, FiFileText, FiCheckCircle, FiClock } from "react-icons/fi";
+import { FiPlusCircle, FiFileText, FiCheckCircle } from "react-icons/fi";
 
 async function getStats() {
   await connectDB();
   const baseQuery = { isTrashed: { $ne: true } };
-  const [total, published, drafts, scheduled] = await Promise.all([
+  const [total, published, drafts] = await Promise.all([
     BlogPost.countDocuments(baseQuery),
     BlogPost.countDocuments({ ...baseQuery, status: "published" }),
     BlogPost.countDocuments({ ...baseQuery, status: "draft" }),
-    BlogPost.countDocuments({ ...baseQuery, status: "scheduled" }),
   ]);
-  return { total, published, drafts, scheduled };
+  return { total, published, drafts };
 }
 
 export default async function DashboardPage() {
@@ -24,7 +23,6 @@ export default async function DashboardPage() {
     { label: "Total Posts", value: stats.total, icon: FiFileText, color: "text-gray-700" },
     { label: "Published", value: stats.published, icon: FiCheckCircle, color: "text-green-600" },
     { label: "Drafts", value: stats.drafts, icon: FiFileText, color: "text-yellow-500" },
-    { label: "Scheduled", value: stats.scheduled, icon: FiClock, color: "text-blue-500" },
   ];
 
   return (
@@ -44,7 +42,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {cards.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="bg-white rounded-xl border border-gray-100 p-5">
             <div className={`${color} mb-2`}>
