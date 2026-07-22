@@ -1,5 +1,10 @@
 "use client";
-import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  NodeViewWrapper,
+  ReactNodeViewRenderer,
+} from "@tiptap/react";
 import { Node } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -14,18 +19,39 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
-  FiBold, FiItalic, FiUnderline, FiLink, FiImage,
-  FiList, FiAlignLeft, FiAlignCenter, FiAlignRight, FiCode,
-  FiExternalLink, FiEdit2, FiTrash2, FiArrowUpRight,
+  FiBold,
+  FiItalic,
+  FiUnderline,
+  FiLink,
+  FiImage,
+  FiList,
+  FiAlignLeft,
+  FiAlignCenter,
+  FiAlignRight,
+  FiCode,
+  FiExternalLink,
+  FiEdit2,
+  FiTrash2,
+  FiArrowUpRight,
 } from "react-icons/fi";
 import {
-  MdFormatListNumbered, MdFormatQuote, MdStrikethroughS,
-  MdTableChart, MdUndo, MdRedo, MdFormatClear,
+  MdFormatListNumbered,
+  MdFormatQuote,
+  MdStrikethroughS,
+  MdTableChart,
+  MdUndo,
+  MdRedo,
+  MdFormatClear,
 } from "react-icons/md";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 
 // ─── CTA Banner Node ─────────────────────────────────────────────────────────
@@ -45,9 +71,13 @@ function CTABannerView({ node, updateAttributes }: any) {
   const [href, setHref] = useState<string>(buttonHref ?? "#");
   const [hrefFocused, setHrefFocused] = useState(false);
 
-  useEffect(() => { setHref(buttonHref ?? "#"); }, [buttonHref]);
+  useEffect(() => {
+    setHref(buttonHref ?? "#");
+  }, [buttonHref]);
 
-  function stopKey(e: React.KeyboardEvent) { e.stopPropagation(); }
+  function stopKey(e: React.KeyboardEvent) {
+    e.stopPropagation();
+  }
 
   const editableStyle = (extra?: React.CSSProperties): React.CSSProperties => ({
     outline: "none",
@@ -60,18 +90,51 @@ function CTABannerView({ node, updateAttributes }: any) {
   const BTN_H = 52;
 
   return (
-    <NodeViewWrapper as="div" className="my-10 group/banner" contentEditable={false}>
-      <div style={{ borderRadius: 20, backgroundColor: "#F15C20", padding: "40px 6% 36px", textAlign: "center", fontFamily: "Arial,sans-serif", boxSizing: "border-box", width: "100%", overflow: "hidden" }}>
-
+    <NodeViewWrapper
+      as="div"
+      className="my-10 group/banner"
+      contentEditable={false}
+    >
+      <div
+        style={{
+          borderRadius: 20,
+          backgroundColor: "#F15C20",
+          padding: "40px 6% 36px",
+          textAlign: "center",
+          fontFamily: "Arial,sans-serif",
+          boxSizing: "border-box",
+          width: "100%",
+          overflow: "hidden",
+        }}
+      >
         {/* Heading — centered */}
         <div style={{ marginBottom: 14 }}>
           <h2
-            contentEditable suppressContentEditableWarning
+            contentEditable
+            suppressContentEditableWarning
             onKeyDown={stopKey}
-            onBlur={(e) => updateAttributes({ heading: e.currentTarget.textContent ?? "" })}
-            onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "rgba(255,255,255,0.5)"; }}
-            onBlurCapture={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "transparent"; }}
-            style={{ ...editableStyle({ margin: 0, fontSize: 30, fontWeight: 700, lineHeight: 1.25, color: "#fff", wordBreak: "break-word", textAlign: "center" }) }}
+            onBlur={(e) =>
+              updateAttributes({ heading: e.currentTarget.textContent ?? "" })
+            }
+            onFocus={(e) => {
+              (e.currentTarget as HTMLElement).style.borderBottomColor =
+                "rgba(255,255,255,0.5)";
+            }}
+            onBlurCapture={(e) => {
+              (e.currentTarget as HTMLElement).style.borderBottomColor =
+                "transparent";
+            }}
+            style={{
+              ...editableStyle({
+                margin: 0,
+                fontSize: 30,
+                fontWeight: 700,
+                lineHeight: 1.25,
+                color: "#fff",
+                wordBreak: "break-word",
+                textAlign: "center",
+              }),
+            }}
           >
             {heading}
           </h2>
@@ -79,42 +142,114 @@ function CTABannerView({ node, updateAttributes }: any) {
 
         {/* Editable paragraph */}
         <p
-          contentEditable suppressContentEditableWarning
+          contentEditable
+          suppressContentEditableWarning
           onKeyDown={stopKey}
-          onBlur={(e) => updateAttributes({ paragraph: e.currentTarget.textContent ?? "" })}
-          onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "rgba(255,255,255,0.4)"; }}
-          onBlurCapture={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = "transparent"; }}
-          style={{ ...editableStyle({ margin: "0 0 28px", fontSize: 15, color: "rgba(255,255,255,0.92)", lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "break-word" }) }}
+          onBlur={(e) =>
+            updateAttributes({ paragraph: e.currentTarget.textContent ?? "" })
+          }
+          onFocus={(e) => {
+            (e.currentTarget as HTMLElement).style.borderBottomColor =
+              "rgba(255,255,255,0.4)";
+          }}
+          onBlurCapture={(e) => {
+            (e.currentTarget as HTMLElement).style.borderBottomColor =
+              "transparent";
+          }}
+          style={{
+            ...editableStyle({
+              margin: "0 0 28px",
+              fontSize: 15,
+              color: "rgba(255,255,255,0.92)",
+              lineHeight: 1.5,
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+            }),
+          }}
         >
           {paragraph}
         </p>
 
         {/* Button: pill + adjacent arrow circle, with gap */}
-        <div style={{ display: "inline-flex", alignItems: "stretch", gap: "0px" }}>
+        <div
+          style={{ display: "inline-flex", alignItems: "stretch", gap: "0px" }}
+        >
           <span
-            contentEditable suppressContentEditableWarning
+            contentEditable
+            suppressContentEditableWarning
             onKeyDown={stopKey}
-            onBlur={(e) => updateAttributes({ buttonText: e.currentTarget.textContent ?? "" })}
-            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#fff", color: "#F15C20", fontSize: 14, fontWeight: 600, padding: "0 32px", borderRadius: "50px", whiteSpace: "nowrap", outline: "none", cursor: "text", minWidth: 160, height: BTN_H, lineHeight: "1" }}
+            onBlur={(e) =>
+              updateAttributes({
+                buttonText: e.currentTarget.textContent ?? "",
+              })
+            }
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#fff",
+              color: "#F15C20",
+              fontSize: 14,
+              fontWeight: 600,
+              padding: "0 32px",
+              borderRadius: "50px",
+              whiteSpace: "nowrap",
+              outline: "none",
+              cursor: "text",
+              minWidth: 160,
+              height: BTN_H,
+              lineHeight: "1",
+            }}
           >
             {buttonText}
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#fff", color: "#F15C20", width: BTN_H, height: BTN_H, borderRadius: "50px", flexShrink: 0 }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#fff",
+              color: "#F15C20",
+              width: BTN_H,
+              height: BTN_H,
+              borderRadius: "50px",
+              flexShrink: 0,
+            }}
+          >
             <FiArrowUpRight size={20} />
           </span>
         </div>
 
         {/* Button URL input */}
         <div className="mt-3 flex items-center justify-center gap-2">
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>URL:</span>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>
+            URL:
+          </span>
           <input
             type="url"
             value={href}
             onFocus={() => setHrefFocused(true)}
-            onBlur={() => { setHrefFocused(false); updateAttributes({ buttonHref: href }); }}
+            onBlur={() => {
+              setHrefFocused(false);
+              updateAttributes({ buttonHref: href });
+            }}
             onChange={(e) => setHref(e.target.value)}
-            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-            style={{ background: "rgba(255,255,255,0.15)", border: hrefFocused ? "1px solid rgba(255,255,255,0.8)" : "1px solid rgba(255,255,255,0.3)", borderRadius: 6, padding: "4px 10px", fontSize: 11, color: "#fff", outline: "none", width: 220 }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+            style={{
+              background: "rgba(255,255,255,0.15)",
+              border: hrefFocused
+                ? "1px solid rgba(255,255,255,0.8)"
+                : "1px solid rgba(255,255,255,0.3)",
+              borderRadius: 6,
+              padding: "4px 10px",
+              fontSize: 11,
+              color: "#fff",
+              outline: "none",
+              width: 220,
+            }}
             placeholder="https://example.com"
           />
         </div>
@@ -145,56 +280,137 @@ const CTABannerNode = Node.create({
   },
 
   parseHTML() {
-    return [{
-      tag: 'div[data-type="cta-banner"]',
-      getAttrs: (dom) => {
-        const el = dom as HTMLElement;
-        return {
-          heading: el.getAttribute("data-heading") ?? DEFAULT_CTA.heading,
-          paragraph: el.getAttribute("data-paragraph") ?? DEFAULT_CTA.paragraph,
-          buttonText: el.getAttribute("data-button-text") ?? DEFAULT_CTA.buttonText,
-          buttonHref: el.getAttribute("data-button-href") ?? DEFAULT_CTA.buttonHref,
-          ctaType: el.getAttribute("data-cta-type") ?? "link",
-          inputPlaceholder: el.getAttribute("data-input-placeholder") ?? "Enter your email...",
-        };
+    return [
+      {
+        tag: 'div[data-type="cta-banner"]',
+        getAttrs: (dom) => {
+          const el = dom as HTMLElement;
+          return {
+            heading: el.getAttribute("data-heading") ?? DEFAULT_CTA.heading,
+            paragraph:
+              el.getAttribute("data-paragraph") ?? DEFAULT_CTA.paragraph,
+            buttonText:
+              el.getAttribute("data-button-text") ?? DEFAULT_CTA.buttonText,
+            buttonHref:
+              el.getAttribute("data-button-href") ?? DEFAULT_CTA.buttonHref,
+            ctaType: el.getAttribute("data-cta-type") ?? "link",
+            inputPlaceholder:
+              el.getAttribute("data-input-placeholder") ??
+              "Enter your email...",
+          };
+        },
       },
-    }];
+    ];
   },
 
   renderHTML({ node }) {
-    const { heading, paragraph, buttonText, buttonHref, ctaType, inputPlaceholder } = node.attrs;
+    const {
+      heading,
+      paragraph,
+      buttonText,
+      buttonHref,
+      ctaType,
+      inputPlaceholder,
+    } = node.attrs;
     const isSubscribe = ctaType === "subscribe";
     const base = {
       "data-type": "cta-banner",
-      "class": "cta-banner not-prose",
+      class: "cta-banner not-prose",
       "data-heading": heading,
       "data-paragraph": paragraph,
       "data-button-text": buttonText,
       "data-button-href": buttonHref,
       "data-cta-type": ctaType,
       "data-input-placeholder": inputPlaceholder,
-      style: "border-radius:20px;background-color:#F15C20;padding:40px 6% 36px;text-align:center;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;overflow:hidden;margin-top:40px;margin-bottom:40px",
+      style:
+        "border-radius:20px;background-color:#F15C20;padding:40px 6% 36px;text-align:center;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;overflow:hidden;margin-top:40px;margin-bottom:40px",
     };
 
     const buttonEl = isSubscribe
-      ? ["div", { style: "display:flex;align-items:center;background:#ffffff;border-radius:50px;overflow:hidden;max-width:420px;margin:0 auto" },
-        ["input", { type: "email", placeholder: inputPlaceholder, style: "flex:1;padding:14px 20px;font-size:14px;outline:none;border:none;background:transparent;color:#666;min-width:0" }],
-        ["button", { type: "submit", style: "background:#F15C20;color:#ffffff;padding:14px 24px;border-radius:50px;border:none;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer;flex-shrink:0" }, buttonText],
-      ]
-      : ["div", { style: "display:inline-flex;align-items:center;gap:0px" },
-        ["a", { href: buttonHref, style: "display:inline-flex;align-items:center;justify-content:center;background:#ffffff;color:#F15C20;text-decoration:none;font-size:14px;font-weight:600;padding:0 32px;border-radius:50px;white-space:nowrap;line-height:1;min-width:160px;height:52px;box-sizing:border-box" }, buttonText],
-        ["a", { href: buttonHref, style: "display:inline-flex;align-items:center;justify-content:center;background:#ffffff;color:#F15C20;text-decoration:none;width:52px;height:52px;border-radius:50px;flex-shrink:0;box-sizing:border-box" },
-          ["svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", class: "lucide lucide-arrow-up-right-icon lucide-arrow-up-right" },
-            ["path", { d: "M7 7h10v10" }],
-            ["path", { d: "M7 17 17 7" }]
-          ]
-        ],
-      ];
+      ? [
+          "div",
+          {
+            style:
+              "display:flex;align-items:center;background:#ffffff;border-radius:50px;overflow:hidden;max-width:420px;margin:0 auto",
+          },
+          [
+            "input",
+            {
+              type: "email",
+              placeholder: inputPlaceholder,
+              style:
+                "flex:1;padding:14px 20px;font-size:14px;outline:none;border:none;background:transparent;color:#666;min-width:0",
+            },
+          ],
+          [
+            "button",
+            {
+              type: "submit",
+              style:
+                "background:#F15C20;color:#ffffff;padding:14px 24px;border-radius:50px;border:none;font-weight:600;font-size:14px;white-space:nowrap;cursor:pointer;flex-shrink:0",
+            },
+            buttonText,
+          ],
+        ]
+      : [
+          "div",
+          { style: "display:inline-flex;align-items:center;gap:0px" },
+          [
+            "a",
+            {
+              href: buttonHref,
+              style:
+                "display:inline-flex;align-items:center;justify-content:center;background:#ffffff;color:#F15C20;text-decoration:none;font-size:14px;font-weight:600;padding:0 32px;border-radius:50px;white-space:nowrap;line-height:1;min-width:160px;height:52px;box-sizing:border-box",
+            },
+            buttonText,
+          ],
+          [
+            "a",
+            {
+              href: buttonHref,
+              style:
+                "display:inline-flex;align-items:center;justify-content:center;background:#ffffff;color:#F15C20;text-decoration:none;width:52px;height:52px;border-radius:50px;flex-shrink:0;box-sizing:border-box",
+            },
+            [
+              "svg",
+              {
+                xmlns: "http://www.w3.org/2000/svg",
+                width: "24",
+                height: "24",
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                "stroke-width": "2",
+                "stroke-linecap": "round",
+                "stroke-linejoin": "round",
+                class:
+                  "lucide lucide-arrow-up-right-icon lucide-arrow-up-right",
+              },
+              ["path", { d: "M7 7h10v10" }],
+              ["path", { d: "M7 17 17 7" }],
+            ],
+          ],
+        ];
 
     return [
-      "div", base,
-      ["h2", { style: "margin:0 0 14px;font-size:30px;font-weight:700;line-height:1.25;color:#ffffff;word-break:break-word;overflow-wrap:break-word;text-align:center" }, heading],
-      ["p", { style: "margin:0 0 28px;font-size:15px;color:rgba(255,255,255,0.92);line-height:1.5;word-break:break-word;overflow-wrap:break-word" }, paragraph],
+      "div",
+      base,
+      [
+        "h2",
+        {
+          style:
+            "margin:0 0 14px;font-size:30px;font-weight:700;line-height:1.25;color:#ffffff;word-break:break-word;overflow-wrap:break-word;text-align:center",
+        },
+        heading,
+      ],
+      [
+        "p",
+        {
+          style:
+            "margin:0 0 28px;font-size:15px;color:rgba(255,255,255,0.92);line-height:1.5;word-break:break-word;overflow-wrap:break-word",
+        },
+        paragraph,
+      ],
       buttonEl,
     ];
   },
@@ -208,7 +424,10 @@ const CTABannerNode = Node.create({
 
 function ImageNodeView({ node, updateAttributes, selected }: any) {
   const { src, alt, align, width } = node.attrs as {
-    src: string; alt: string; align: string; width: string;
+    src: string;
+    alt: string;
+    align: string;
+    width: string;
   };
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef(0);
@@ -221,7 +440,10 @@ function ImageNodeView({ node, updateAttributes, selected }: any) {
   useEffect(() => {
     if (!isActive) return;
     function onOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as globalThis.Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as globalThis.Node)
+      ) {
         setIsActive(false);
       }
     }
@@ -235,7 +457,10 @@ function ImageNodeView({ node, updateAttributes, selected }: any) {
     dragStartX.current = e.clientX;
     dragStartW.current = containerRef.current?.offsetWidth ?? 0;
     function onMove(me: MouseEvent) {
-      const newW = Math.max(60, dragStartW.current + (me.clientX - dragStartX.current));
+      const newW = Math.max(
+        60,
+        dragStartW.current + (me.clientX - dragStartX.current),
+      );
       updateAttributes({ width: `${newW}px` });
     }
     function onUp() {
@@ -252,9 +477,11 @@ function ImageNodeView({ node, updateAttributes, selected }: any) {
     width: width || "100%",
     maxWidth: "100%",
     position: "relative",
-    ...(align === "center" ? { marginLeft: "auto", marginRight: "auto" } :
-      align === "right" ? { marginLeft: "auto", marginRight: "0" } :
-        { marginLeft: "0", marginRight: "auto" }),
+    ...(align === "center"
+      ? { marginLeft: "auto", marginRight: "auto" }
+      : align === "right"
+        ? { marginLeft: "auto", marginRight: "0" }
+        : { marginLeft: "0", marginRight: "auto" }),
   };
 
   return (
@@ -268,29 +495,55 @@ function ImageNodeView({ node, updateAttributes, selected }: any) {
         <img
           src={src}
           alt={alt ?? ""}
-          style={{ display: "block", width: "100%", maxWidth: "100%", borderRadius: 4 }}
+          style={{
+            display: "block",
+            width: "100%",
+            maxWidth: "100%",
+            borderRadius: 4,
+          }}
         />
 
         {showControls && (
           <>
             {/* Selection ring */}
-            <div style={{ position: "absolute", inset: 0, border: "2px solid #F15C20", borderRadius: 4, pointerEvents: "none" }} />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                border: "2px solid #F15C20",
+                borderRadius: 4,
+                pointerEvents: "none",
+              }}
+            />
 
             {/* Floating toolbar */}
             <div
               className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-lg px-2 py-1.5 shadow-xl whitespace-nowrap z-50"
-              style={{ background: "rgba(17,24,39,0.92)", backdropFilter: "blur(4px)" }}
+              style={{
+                background: "rgba(17,24,39,0.92)",
+                backdropFilter: "blur(4px)",
+              }}
               onMouseDown={(e) => e.stopPropagation()}
             >
               {(["left", "center", "right"] as const).map((a) => (
                 <button
                   key={a}
                   type="button"
-                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); updateAttributes({ align: a }); }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    updateAttributes({ align: a });
+                  }}
                   title={`Align ${a}`}
                   className={`p-1 rounded transition-colors ${align === a ? "bg-[#F15C20] text-white" : "text-gray-300 hover:text-white"}`}
                 >
-                  {a === "left" ? <FiAlignLeft size={12} /> : a === "center" ? <FiAlignCenter size={12} /> : <FiAlignRight size={12} />}
+                  {a === "left" ? (
+                    <FiAlignLeft size={12} />
+                  ) : a === "center" ? (
+                    <FiAlignCenter size={12} />
+                  ) : (
+                    <FiAlignRight size={12} />
+                  )}
                 </button>
               ))}
               <div className="w-px h-4 bg-gray-600 mx-0.5" />
@@ -298,7 +551,11 @@ function ImageNodeView({ node, updateAttributes, selected }: any) {
                 <button
                   key={s}
                   type="button"
-                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); updateAttributes({ width: s }); }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    updateAttributes({ width: s });
+                  }}
                   className={`text-xs px-1.5 py-0.5 rounded transition-colors ${width === s ? "bg-[#F15C20] text-white" : "text-gray-300 hover:text-white"}`}
                 >
                   {s}
@@ -307,7 +564,10 @@ function ImageNodeView({ node, updateAttributes, selected }: any) {
             </div>
 
             {/* Alt text input */}
-            <div className="absolute bottom-2 left-2 right-2" onMouseDown={(e) => e.stopPropagation()}>
+            <div
+              className="absolute bottom-2 left-2 right-2"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
               <input
                 type="text"
                 value={alt ?? ""}
@@ -324,14 +584,31 @@ function ImageNodeView({ node, updateAttributes, selected }: any) {
               onMouseDown={onResizeStart}
               title="Drag to resize"
               style={{
-                position: "absolute", right: -5, top: "50%", transform: "translateY(-50%)",
-                width: 12, height: 32, background: "#fff", border: "1px solid #d1d5db",
-                borderRadius: "4px 0 0 4px", cursor: "ew-resize",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.15)", zIndex: 50,
+                position: "absolute",
+                right: -5,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 12,
+                height: 32,
+                background: "#fff",
+                border: "1px solid #d1d5db",
+                borderRadius: "4px 0 0 4px",
+                cursor: "ew-resize",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+                zIndex: 50,
               }}
             >
-              <div style={{ width: 2, height: 14, background: "#9ca3af", borderRadius: 2 }} />
+              <div
+                style={{
+                  width: 2,
+                  height: 14,
+                  background: "#9ca3af",
+                  borderRadius: 2,
+                }}
+              />
             </div>
           </>
         )}
@@ -351,7 +628,8 @@ const CustomImage = Image.extend({
       },
       align: {
         default: "center",
-        parseHTML: (el) => (el as HTMLElement).getAttribute("data-align") ?? "center",
+        parseHTML: (el) =>
+          (el as HTMLElement).getAttribute("data-align") ?? "center",
         renderHTML: () => ({}),
       },
       width: {
@@ -369,36 +647,216 @@ const CustomImage = Image.extend({
     const width = (node.attrs.width as string) ?? "100%";
     const alt = (node.attrs.alt as string) ?? "";
     const { align: _a, width: _w, alt: _alt, ...rest } = HTMLAttributes;
-    const style = `display:block;width:${width};max-width:100%;margin-bottom:32px;${align === "center" ? "margin-left:auto;margin-right:auto;margin-top:8px;" :
-        align === "right" ? "margin-left:auto;margin-right:0;margin-top:8px;" : "margin-top:8px;"
-      }`;
-    return ["img", { ...rest, alt, "data-align": align, "data-width": width, style }];
+    const style = `display:block;width:${width};max-width:100%;margin-bottom:32px;${
+      align === "center"
+        ? "margin-left:auto;margin-right:auto;margin-top:8px;"
+        : align === "right"
+          ? "margin-left:auto;margin-right:0;margin-top:8px;"
+          : "margin-top:8px;"
+    }`;
+    return [
+      "img",
+      { ...rest, alt, "data-align": align, "data-width": width, style },
+    ];
   },
   addNodeView() {
     return ReactNodeViewRenderer(ImageNodeView);
   },
 });
 
+// ─── HTML Pretty Formatter ───────────────────────────────────────────────────
+
+function formatHtml(html: string): string {
+  if (!html) return "";
+  let pad = 0;
+
+  const cleanHtml = html
+    .replace(/></g, ">\n<")
+    .replace(/(<br\s*\/?>)/gi, "$1\n");
+
+  const lines = cleanHtml.split("\n");
+  const formattedLines: string[] = [];
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    if (trimmed.match(/^<\/\w/)) {
+      if (pad > 0) pad -= 1;
+    }
+
+    const indentStr = "  ".repeat(pad);
+    formattedLines.push(indentStr + trimmed);
+
+    const isOpeningTag = trimmed.match(/^<\w[^>]*[^\/]>$/i);
+    const isSelfClosing =
+      trimmed.match(/^<(img|input|br|hr|meta|link)/i) || trimmed.endsWith("/>");
+
+    if (isOpeningTag && !isSelfClosing) {
+      pad += 1;
+    }
+  });
+
+  return formattedLines.join("\n");
+}
+
+// ─── VS Code Dark+ Syntax Highlighter ────────────────────────────────────────
+
+function highlightHtmlVsCode(code: string): string {
+  if (!code) return "";
+
+  let escaped = code
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  escaped = escaped.replace(
+    /(&lt;!--[\s\S]*?--&gt;)/g,
+    '<span style="color:#6a9955;font-style:italic;">$1</span>',
+  );
+
+  escaped = escaped.replace(
+    /(&lt;\/?[a-zA-Z0-9-]+)(\s+[^&>]*?)?(\/&gt;|&gt;)/g,
+    (_match, tagStart, attrs, tagEnd) => {
+      let result = `<span style="color:#569cd6;font-weight:600;">${tagStart}</span>`;
+
+      if (attrs) {
+        const highlightedAttrs = attrs.replace(
+          /([a-zA-Z0-9-:]+)(=)("[^"]*"|'[^']*'|[^\s>]+)?/g,
+          (_m: string, attrName: string, eq: string, attrVal: string) => {
+            let attrStr = `<span style="color:#9cdcfe;">${attrName}</span><span style="color:#d4d4d4;">${eq}</span>`;
+            if (attrVal) {
+              attrStr += `<span style="color:#ce9178;">${attrVal}</span>`;
+            }
+            return attrStr;
+          },
+        );
+        result += highlightedAttrs;
+      }
+
+      result += `<span style="color:#569cd6;font-weight:600;">${tagEnd}</span>`;
+      return result;
+    },
+  );
+
+  return escaped;
+}
+
+// ─── VS Code HTML Editor Component ──────────────────────────────────────────
+
+function VsCodeHtmlEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
+
+  const lines = useMemo(() => value.split("\n"), [value]);
+  const highlightedCode = useMemo(() => highlightHtmlVsCode(value), [value]);
+
+  function handleScroll() {
+    if (!textareaRef.current) return;
+    const top = textareaRef.current.scrollTop;
+    const left = textareaRef.current.scrollLeft;
+    if (preRef.current) {
+      preRef.current.scrollTop = top;
+      preRef.current.scrollLeft = left;
+    }
+    if (gutterRef.current) {
+      gutterRef.current.scrollTop = top;
+    }
+  }
+
+  return (
+    <div className="flex-1 min-h-0 my-4 relative rounded-xl border border-gray-800 overflow-hidden bg-[#1e1e1e] flex flex-col shadow-2xl">
+      {/* Status Bar */}
+      <div className="shrink-0 px-4 py-2 bg-[#252526] border-b border-gray-800 flex items-center justify-between text-xs text-gray-400 font-mono select-none">
+        <div className="flex items-center gap-3">
+          <span className="text-gray-600">|</span>
+          <span>
+            {lines.length} {lines.length === 1 ? "line" : "lines"}
+          </span>
+          <span className="text-gray-600">|</span>
+          <span>{value.length} chars</span>
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-gray-500">
+          <span>UTF-8</span>
+          <span>HTML5</span>
+        </div>
+      </div>
+
+      {/* Editor Body */}
+      <div className="flex-1 min-h-0 flex relative bg-[#1e1e1e] overflow-hidden">
+        {/* Line Numbers Gutter */}
+        <div
+          ref={gutterRef}
+          className="shrink-0 w-12 py-4 bg-[#1e1e1e] border-r border-gray-800/80 text-right pr-3 font-mono text-xs text-gray-600 select-none overflow-hidden leading-6"
+        >
+          {lines.map((_, i) => (
+            <div key={i}>{i + 1}</div>
+          ))}
+        </div>
+
+        {/* Code Content & Overlay Textarea */}
+        <div className="flex-1 relative overflow-hidden bg-[#1e1e1e]">
+          {/* Highlighted Code (underneath) */}
+          <pre
+            ref={preRef}
+            aria-hidden="true"
+            className="absolute inset-0 p-4 font-mono text-sm leading-6 whitespace-pre overflow-auto pointer-events-none text-[#d4d4d4] select-none m-0 border-none"
+            dangerouslySetInnerHTML={{ __html: highlightedCode + "\n" }}
+          />
+
+          {/* Editable Textarea (transparent text, caret white) */}
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onScroll={handleScroll}
+            className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 bg-transparent text-transparent caret-white focus:outline-none resize-none whitespace-pre overflow-auto selection:bg-[#264f78]/60 m-0 border-none"
+            placeholder="<!-- Insert or edit HTML source code here... -->"
+            spellCheck={false}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Shared UI ────────────────────────────────────────────────────────────────
 
 interface TiptapEditorProps {
   content: object;
+  contentHtml?: string;
   onChange: (json: object, html: string) => void;
 }
 
 function ToolbarButton({
-  onClick, active, title, children,
+  onClick,
+  active,
+  title,
+  children,
 }: {
-  onClick: () => void; active?: boolean; title: string; children: React.ReactNode;
+  onClick: () => void;
+  active?: boolean;
+  title: string;
+  children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
-      onMouseDown={(e) => { e.preventDefault(); onClick(); }}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
       title={title}
       className={`p-1.5 flex items-center justify-center rounded text-sm transition-all ${
-        active 
-          ? "bg-[#F15C20] text-white shadow-inner ring-2 ring-offset-1 ring-[#F15C20]/50" 
+        active
+          ? "bg-[#F15C20] text-white shadow-inner ring-2 ring-offset-1 ring-[#F15C20]/50"
           : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
       }`}
     >
@@ -412,16 +870,43 @@ function Divider() {
 }
 
 const PRESET_COLORS = [
-  "#111827", "#374151", "#6B7280", "#D1D5DB", "#ffffff",
-  "#dc2626", "#F15C20", "#eab308", "#22c55e", "#3b82f6",
-  "#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#0ea5e9",
+  "#111827",
+  "#374151",
+  "#6B7280",
+  "#D1D5DB",
+  "#ffffff",
+  "#dc2626",
+  "#F15C20",
+  "#eab308",
+  "#22c55e",
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#0ea5e9",
 ];
 
-const FONT_SIZES = ["12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "36px", "48px"];
+const FONT_SIZES = [
+  "12px",
+  "14px",
+  "16px",
+  "18px",
+  "20px",
+  "24px",
+  "28px",
+  "32px",
+  "36px",
+  "48px",
+];
 
 // ─── Main Editor ──────────────────────────────────────────────────────────────
 
-export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
+export function TiptapEditor({
+  content,
+  contentHtml,
+  onChange,
+}: TiptapEditorProps) {
   const isFirstRender = useRef(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const colorPickerRef = useRef<HTMLDivElement>(null);
@@ -429,6 +914,10 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
   const [uploading, setUploading] = useState(false);
   const [colorPanelOpen, setColorPanelOpen] = useState(false);
+  // Source code edit dialog state
+  const [htmlDialogOpen, setHtmlDialogOpen] = useState(false);
+  const [htmlSource, setHtmlSource] = useState("");
+  const [copyToast, setCopyToast] = useState(false);
   // Force re-render on selection change so inTable detection is live
   const [, setSelTick] = useState(0);
 
@@ -439,6 +928,18 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
   const [linkNewTab, setLinkNewTab] = useState(false);
   const [linkNofollow, setLinkNofollow] = useState(false);
   const linkBtnRef = useRef<HTMLButtonElement>(null);
+
+  const initialContent = useMemo(() => {
+    if (
+      content &&
+      typeof content === "object" &&
+      Object.keys(content).length > 0 &&
+      (content as any).type === "doc"
+    ) {
+      return content;
+    }
+    return contentHtml || "";
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -463,7 +964,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       TableHeader,
       CTABannerNode,
     ],
-    content: Object.keys(content).length > 0 ? content : "",
+    content: initialContent,
     onUpdate({ editor }) {
       onChange(editor.getJSON(), editor.getHTML());
     },
@@ -472,7 +973,8 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     },
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none min-h-[400px] focus:outline-none px-1 text-gray-900",
+        class:
+          "prose prose-sm max-w-none min-h-[400px] focus:outline-none px-1 text-gray-900",
       },
     },
     immediatelyRender: false,
@@ -480,10 +982,17 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
   useEffect(() => {
     if (!editor) return;
-    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const current = JSON.stringify(editor.getJSON());
     const incoming = JSON.stringify(content);
-    if (current !== incoming && Object.keys(content).length > 0) {
+    if (
+      current !== incoming &&
+      Object.keys(content).length > 0 &&
+      (content as any).type === "doc"
+    ) {
       editor.commands.setContent(content);
     }
   }, [content, editor]);
@@ -504,7 +1013,10 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
   useEffect(() => {
     if (!colorPanelOpen) return;
     function handler(e: MouseEvent) {
-      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as globalThis.Node)) {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(e.target as globalThis.Node)
+      ) {
         setColorPanelOpen(false);
       }
     }
@@ -516,13 +1028,34 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
   useEffect(() => {
     if (!linkPopoverOpen) return;
     function handler(e: MouseEvent) {
-      if (linkBtnRef.current && !linkBtnRef.current.parentElement?.contains(e.target as globalThis.Node)) {
+      if (
+        linkBtnRef.current &&
+        !linkBtnRef.current.parentElement?.contains(e.target as globalThis.Node)
+      ) {
         setLinkPopoverOpen(false);
       }
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [linkPopoverOpen]);
+
+  function openHtmlDialog() {
+    if (!editor) return;
+    const raw = editor.getHTML();
+    setHtmlSource(formatHtml(raw));
+    setHtmlDialogOpen(true);
+  }
+
+  function applyHtmlChanges() {
+    if (!editor) return;
+    try {
+      editor.commands.setContent(htmlSource);
+      onChange(editor.getJSON(), editor.getHTML());
+    } catch (err) {
+      console.error("HTML parse error:", err);
+    }
+    setHtmlDialogOpen(false);
+  }
 
   if (!editor) return null;
 
@@ -609,7 +1142,11 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     setUploading(false);
     if (res.ok) {
       const { url } = await res.json();
-      editor!.chain().focus().setImage({ src: url, alt: altFromFilename } as any).run();
+      editor!
+        .chain()
+        .focus()
+        .setImage({ src: url, alt: altFromFilename } as any)
+        .run();
     }
   }
 
@@ -624,7 +1161,8 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
   const wordCount = editor.storage.characterCount?.words() ?? 0;
   const currentColor: string = editor.getAttributes("textStyle")?.color ?? "";
-  const currentFontSize: string = editor.getAttributes("textStyle")?.fontSize ?? "";
+  const currentFontSize: string =
+    editor.getAttributes("textStyle")?.fontSize ?? "";
 
   // Reliable table detection: walk ancestor nodes from cursor
   const inTable = (() => {
@@ -653,14 +1191,32 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
       {/* Toolbar — always visible at top, never scrolls */}
       <div className="shrink-0 flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-gray-100 bg-gray-50 rounded-t-xl z-10">
-
         {/* History */}
-        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} title="Undo">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().undo().run()}
+          title="Undo (Ctrl+Z)"
+        >
           <MdUndo size={16} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} title="Redo">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().redo().run()}
+          title="Redo (Ctrl+Y)"
+        >
           <MdRedo size={16} />
         </ToolbarButton>
+
+        <Divider />
+
+        {/* Source Code Dialog Button */}
+        <button
+          type="button"
+          onClick={openHtmlDialog}
+          title="View & Edit Formatted HTML Source Code"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-all hover:border-gray-300"
+        >
+          <FiCode size={14} className="text-[#F15C20]" />
+          <span>&lt;/&gt; HTML Source</span>
+        </button>
 
         <Divider />
 
@@ -668,7 +1224,9 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         {([2, 3, 4, 5, 6] as const).map((level) => (
           <ToolbarButton
             key={level}
-            onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level }).run()
+            }
             active={editor.isActive("heading", { level })}
             title={`Heading ${level}`}
           >
@@ -694,7 +1252,9 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         >
           <option value="">Size</option>
           {FONT_SIZES.map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </select>
 
@@ -702,7 +1262,10 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         <div ref={colorPickerRef} className="relative">
           <button
             type="button"
-            onMouseDown={(e) => { e.preventDefault(); openColorPanel(); }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              openColorPanel();
+            }}
             title="Text color"
             className="flex flex-col items-center justify-center p-1.5 rounded text-gray-600 hover:bg-gray-100 transition-colors"
           >
@@ -719,10 +1282,18 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
                   <button
                     key={c}
                     type="button"
-                    onMouseDown={(e) => { e.preventDefault(); applyColor(c); }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      applyColor(c);
+                    }}
                     style={{
                       background: c,
-                      border: c === currentColor ? "2px solid #F15C20" : c === "#ffffff" ? "1px solid #e5e7eb" : "none",
+                      border:
+                        c === currentColor
+                          ? "2px solid #F15C20"
+                          : c === "#ffffff"
+                            ? "1px solid #e5e7eb"
+                            : "none",
                     }}
                     className="w-7 h-7 rounded-md transition-transform hover:scale-110"
                     title={c}
@@ -730,16 +1301,23 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-500 shrink-0">Custom:</label>
+                <label className="text-xs text-gray-500 shrink-0">
+                  Custom:
+                </label>
                 <input
                   type="color"
                   defaultValue={currentColor || "#374151"}
-                  onInput={(e) => applyColor((e.target as HTMLInputElement).value)}
+                  onInput={(e) =>
+                    applyColor((e.target as HTMLInputElement).value)
+                  }
                   className="w-7 h-7 rounded cursor-pointer border border-gray-200 p-0.5"
                 />
                 <button
                   type="button"
-                  onMouseDown={(e) => { e.preventDefault(); clearColor(); }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    clearColor();
+                  }}
                   className="ml-auto text-xs text-gray-400 hover:text-gray-700"
                   title="Remove color"
                 >
@@ -753,51 +1331,104 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         <Divider />
 
         {/* Inline formatting */}
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="Bold">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          active={editor.isActive("bold")}
+          title="Bold"
+        >
           <FiBold size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title="Italic">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          active={editor.isActive("italic")}
+          title="Italic"
+        >
           <FiItalic size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} title="Underline">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          active={editor.isActive("underline")}
+          title="Underline"
+        >
           <FiUnderline size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} title="Strikethrough">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          active={editor.isActive("strike")}
+          title="Strikethrough"
+        >
           <MdStrikethroughS size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive("code")} title="Inline code">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          active={editor.isActive("code")}
+          title="Inline code"
+        >
           <FiCode size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()} title="Clear formatting">
+        <ToolbarButton
+          onClick={() =>
+            editor.chain().focus().clearNodes().unsetAllMarks().run()
+          }
+          title="Clear formatting"
+        >
           <MdFormatClear size={14} />
         </ToolbarButton>
 
         <Divider />
 
         {/* Lists */}
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title="Bullet list">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          active={editor.isActive("bulletList")}
+          title="Bullet list"
+        >
           <FiList size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Ordered list">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          active={editor.isActive("orderedList")}
+          title="Ordered list"
+        >
           <MdFormatListNumbered size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Blockquote">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          active={editor.isActive("blockquote")}
+          title="Blockquote"
+        >
           <MdFormatQuote size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive("codeBlock")} title="Code block">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          active={editor.isActive("codeBlock")}
+          title="Code block"
+        >
           <span className="text-xs font-mono">{"</>"}</span>
         </ToolbarButton>
 
         <Divider />
 
         {/* Alignment */}
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} title="Align left">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().setTextAlign("left").run()}
+          active={editor.isActive({ textAlign: "left" })}
+          title="Align left"
+        >
           <FiAlignLeft size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} title="Align center">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().setTextAlign("center").run()}
+          active={editor.isActive({ textAlign: "center" })}
+          title="Align center"
+        >
           <FiAlignCenter size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} title="Align right">
+        <ToolbarButton
+          onClick={() => editor.chain().focus().setTextAlign("right").run()}
+          active={editor.isActive({ textAlign: "right" })}
+          title="Align right"
+        >
           <FiAlignRight size={14} />
         </ToolbarButton>
 
@@ -808,10 +1439,16 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
           <button
             ref={linkBtnRef}
             type="button"
-            onClick={(e) => { e.preventDefault(); handleLinkButtonClick(); }}
+            onClick={(e) => {
+              e.preventDefault();
+              handleLinkButtonClick();
+            }}
             title={editor.isActive("link") ? "Open / edit link" : "Insert link"}
-            className={`p-1.5 rounded text-sm transition-colors ${editor.isActive("link") ? "bg-[#F15C20] text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-              }`}
+            className={`p-1.5 rounded text-sm transition-colors ${
+              editor.isActive("link")
+                ? "bg-[#F15C20] text-white"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
           >
             <FiLink size={14} />
           </button>
@@ -827,7 +1464,10 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
               </div>
               <button
                 type="button"
-                onMouseDown={(e) => { e.preventDefault(); openExternalLink(); }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  openExternalLink();
+                }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <FiExternalLink size={13} />
@@ -835,7 +1475,10 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
               </button>
               <button
                 type="button"
-                onMouseDown={(e) => { e.preventDefault(); openEditDialog(); }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  openEditDialog();
+                }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <FiEdit2 size={13} />
@@ -845,7 +1488,12 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  editor.chain().focus().extendMarkRange("link").unsetLink().run();
+                  editor
+                    .chain()
+                    .focus()
+                    .extendMarkRange("link")
+                    .unsetLink()
+                    .run();
                   setLinkPopoverOpen(false);
                 }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-100"
@@ -856,10 +1504,23 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
             </div>
           )}
         </div>
-        <ToolbarButton onClick={() => fileInputRef.current?.click()} title="Upload image" active={uploading}>
+        <ToolbarButton
+          onClick={() => fileInputRef.current?.click()}
+          title="Upload image"
+          active={uploading}
+        >
           <FiImage size={14} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table">
+        <ToolbarButton
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+          title="Insert table"
+        >
           <MdTableChart size={14} />
         </ToolbarButton>
         <ToolbarButton onClick={insertBanner} title="Insert CTA banner">
@@ -870,15 +1531,28 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         {inTable && (
           <>
             <Divider />
-            <span className="text-xs text-gray-400 px-1 select-none">Table:</span>
-            <ToolbarButton onClick={() => editor.chain().focus().addRowBefore().run()} title="Add row above">
+            <span className="text-xs text-gray-400 px-1 select-none">
+              Table:
+            </span>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().addRowBefore().run()}
+              title="Add row above"
+            >
               <span className="text-[10px] font-bold leading-none">+R↑</span>
             </ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()} title="Add row below">
+            <ToolbarButton
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              title="Add row below"
+            >
               <span className="text-[10px] font-bold leading-none">+R↓</span>
             </ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().deleteRow().run()} title="Delete row">
-              <span className="text-[10px] font-bold leading-none text-red-500">−R</span>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              title="Delete row"
+            >
+              <span className="text-[10px] font-bold leading-none text-red-500">
+                −R
+              </span>
             </ToolbarButton>
             <Divider />
             <ToolbarButton
@@ -887,7 +1561,8 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
                 const { selection, doc } = editor.state;
                 const table = doc.resolve(selection.from).node(-1);
                 const currentCols = table?.firstChild?.childCount ?? 0;
-                if (currentCols < 10) editor.chain().focus().addColumnBefore().run();
+                if (currentCols < 10)
+                  editor.chain().focus().addColumnBefore().run();
               }}
               title="Add column left (max 10)"
             >
@@ -898,22 +1573,32 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
                 const { selection, doc } = editor.state;
                 const table = doc.resolve(selection.from).node(-1);
                 const currentCols = table?.firstChild?.childCount ?? 0;
-                if (currentCols < 10) editor.chain().focus().addColumnAfter().run();
+                if (currentCols < 10)
+                  editor.chain().focus().addColumnAfter().run();
               }}
               title="Add column right (max 10)"
             >
               <span className="text-[10px] font-bold leading-none">+C→</span>
             </ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().deleteColumn().run()} title="Delete column">
-              <span className="text-[10px] font-bold leading-none text-red-500">−C</span>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              title="Delete column"
+            >
+              <span className="text-[10px] font-bold leading-none text-red-500">
+                −C
+              </span>
             </ToolbarButton>
             <Divider />
-            <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()} title="Delete table">
-              <span className="text-[10px] font-bold leading-none text-red-500">Del Table</span>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              title="Delete table"
+            >
+              <span className="text-[10px] font-bold leading-none text-red-500">
+                Del Table
+              </span>
             </ToolbarButton>
           </>
         )}
-
       </div>
 
       {/* Editor area — scrolls independently */}
@@ -925,16 +1610,20 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
             const node = el as unknown as HTMLDivElement;
             if ((node as any).__linkGuard) return;
             (node as any).__linkGuard = true;
-            node.addEventListener("click", (e) => {
-              const a = (e.target as HTMLElement).closest("a");
-              if (a) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (e.ctrlKey || e.metaKey) {
-                  window.open(a.href, "_blank");
+            node.addEventListener(
+              "click",
+              (e) => {
+                const a = (e.target as HTMLElement).closest("a");
+                if (a) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (e.ctrlKey || e.metaKey) {
+                    window.open(a.href, "_blank");
+                  }
                 }
-              }
-            }, { capture: true });
+              },
+              { capture: true },
+            );
           }}
         />
       </div>
@@ -944,55 +1633,63 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         {wordCount} word{wordCount !== 1 ? "s" : ""}
       </div>
 
-      {/* ── Link Dialog ──────────────────────────────────────────────────────── */}
-      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Insert Link</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && applyLink()}
-              placeholder="https://example.com"
-              autoFocus
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F15C20] focus:ring-1 focus:ring-[#F15C20]"
-            />
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={linkNewTab}
-                  onChange={(e) => setLinkNewTab(e.target.checked)}
-                  className="accent-[#F15C20]"
-                />
-                Open in new tab
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={linkNofollow}
-                  onChange={(e) => setLinkNofollow(e.target.checked)}
-                  className="accent-[#F15C20]"
-                />
-                No follow <span className="text-xs text-gray-400">(adds rel=&quot;nofollow&quot;)</span>
-              </label>
+      {/* ── HTML Source Code Dialog ────────────────────────────────────────────── */}
+      <Dialog open={htmlDialogOpen} onOpenChange={setHtmlDialogOpen}>
+        <DialogContent className="!max-w-[96vw] w-[96vw] h-[92vh] flex flex-col p-6 bg-[#18181b] border border-gray-800 text-white rounded-2xl shadow-2xl overflow-hidden">
+          <DialogHeader className="shrink-0 pb-3 border-b border-gray-800 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-[#F15C20]/20 text-[#F15C20]">
+                <FiCode size={22} />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
+                  HTML Source Code Editor
+                </DialogTitle>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <DialogClose
-              render={
-                <button type="button" className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  Cancel
-                </button>
-              }
-            />
-            <button type="button" onClick={applyLink}
-              className="px-4 py-2 text-sm font-medium bg-[#F15C20] hover:bg-[#d94d17] text-white rounded-lg transition-colors">
-              Apply
-            </button>
+
+            <div className="flex items-center gap-2 mr-6">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(htmlSource);
+                  setCopyToast(true);
+                  setTimeout(() => setCopyToast(false), 2000);
+                }}
+                className="px-3.5 py-1.5 text-xs font-semibold bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg transition-colors border border-gray-700"
+              >
+                {copyToast ? "✓ Copied!" : "Copy"}
+              </button>
+            </div>
+          </DialogHeader>
+
+          {/* VS Code Code Editor Component */}
+          <VsCodeHtmlEditor value={htmlSource} onChange={setHtmlSource} />
+
+          <DialogFooter className="!bg-[#18181b] !border-t !border-gray-800 shrink-0 pt-4 pb-2 !px-0 !mx-0 !mb-0 flex flex-row items-center justify-between">
+            <p className="text-xs text-gray-300 font-medium">
+              Click &quot;Apply Changes&quot; to update the blog post and live
+              preview.
+            </p>
+            <div className="flex items-center gap-3">
+              <DialogClose
+                render={
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-xs font-medium border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                }
+              />
+              <button
+                type="button"
+                onClick={applyHtmlChanges}
+                className="px-6 py-2 text-xs font-semibold bg-[#F15C20] hover:bg-[#d94d17] text-white rounded-lg transition-colors shadow-md"
+              >
+                Apply Changes
+              </button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

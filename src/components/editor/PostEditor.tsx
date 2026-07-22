@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
 import dynamic from "next/dynamic";
-const EditorJsComponent = dynamic(() => import("@/components/editor/EditorJsComponent"), {
+const TiptapEditor = dynamic(() => import("@/components/editor/TiptapEditor").then((m) => m.TiptapEditor), {
   ssr: false,
   loading: () => (
     <div className="h-[400px] flex items-center justify-center border border-gray-200 rounded-xl bg-gray-50">
@@ -62,6 +62,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
   // Post fields
   const [title, setTitle] = useState((initialPost?.title as string) ?? "");
   const [slug, setSlug] = useState((initialPost?.slug as string) ?? "");
+  const [isSlugCustomized, setIsSlugCustomized] = useState(!!(initialPost?.slug as string));
   const [content, setContent] = useState<object>((initialPost?.content as object) ?? {});
   const [contentHtml, setContentHtml] = useState((initialPost?.contentHtml as string) ?? "");
   const [excerpt, setExcerpt] = useState((initialPost?.excerpt as string) ?? "");
@@ -111,10 +112,10 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
 
   // Auto-generate slug from title
   useEffect(() => {
-    if (title) {
+    if (title && !isSlugCustomized) {
       setSlug(slugify(title, { lower: true, strict: true }));
     }
-  }, [title]);
+  }, [title, isSlugCustomized]);
 
   // Auto-fill SEO title from post title
   useEffect(() => {
@@ -358,7 +359,10 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
               <input
                 type="text"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) => {
+                  setSlug(e.target.value);
+                  setIsSlugCustomized(true);
+                }}
                 placeholder="post-slug"
                 className="text-[#F15C20] bg-transparent border-none outline-none font-mono text-sm flex-1 min-w-0 border-b border-transparent hover:border-gray-300 focus:border-[#F15C20] transition-colors pb-0.5"
               />
@@ -368,7 +372,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
           {/* Editor card — fills remaining height, toolbar inside always visible */}
           <div className="flex-1 min-h-0 px-6 pb-5 pt-3 overflow-hidden">
             <div className="h-full bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-              <EditorJsComponent content={content} onChange={handleContentChange} />
+              <TiptapEditor content={content} contentHtml={contentHtml} onChange={handleContentChange} />
             </div>
           </div>
         </div>
