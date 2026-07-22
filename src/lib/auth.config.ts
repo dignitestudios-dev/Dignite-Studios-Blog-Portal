@@ -22,8 +22,8 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isDashboard = nextUrl.pathname.startsWith("/dashboard");
-      if (isDashboard) return isLoggedIn;
+      const isProtected = nextUrl.pathname.startsWith("/dashboard") || nextUrl.pathname.startsWith("/preview");
+      if (isProtected) return isLoggedIn;
       return true;
     },
     jwt({ token, user, trigger, session }) {

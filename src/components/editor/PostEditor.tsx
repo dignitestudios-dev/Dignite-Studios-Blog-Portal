@@ -283,30 +283,62 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
   const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? "https://dignitestudios.com";
   const previewUrl = `${websiteUrl}/blog/${slug || "preview"}`;
 
-  return (
-    <div className="h-screen flex flex-col bg-[#f4f5f7] overflow-hidden">
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="shrink-0 z-30 bg-white border-b border-gray-100 h-14 flex items-center px-6 gap-4">
-        <button
-          onClick={() => router.push("/dashboard/posts")}
-          className="text-sm text-gray-400 hover:text-gray-800 transition-colors shrink-0"
-        >
-          ← All Posts
-        </button>
-        <span className="text-gray-200">|</span>
-        <p className="text-sm font-medium text-gray-700 truncate min-w-0 flex-1">
-          {title || <span className="text-gray-300">Untitled</span>}
-        </p>
+  const handlePreview = useCallback(async () => {
+    let targetId = postId;
 
-        <div className="hidden md:flex items-center gap-3 text-xs text-gray-400 shrink-0">
-          {(autoSaving || timeSinceSave) && (
-            <>
-              <span className="text-gray-400 italic">
-                {autoSaving ? "Saving..." : timeSinceSave}
-              </span>
-              <span className="text-gray-200">·</span>
-            </>
-          )}
+    if (!targetId) {
+      if (!title.trim() || !featuredImage.url.trim()) {
+        setToast({ msg: "Please add title and featured image before previewing.", type: "error" });
+        return;
+      }
+      setSaving(true);
+      const payload = buildPayload();
+      try {
+        const res = await fetch("/api/posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        setSaving(false);
+        if (res.ok) {
+          const data = await res.json();
+          targetId = data._id;
+          router.replace(`/dashboard/posts/${targetId}`);
+        } else {
+          setToast({ msg: "Failed to save post for preview.", type: "error" });
+          return;
+        }
+      } catch {
+        setSaving(false);
+        setToast({ msg: "Error creating preview.", type: "error" });
+        return;
+      }
+    }
+
+    if (targetId) {
+      window.open(`/preview/${targetId}`, "_blank");
+    }
+  }, [postId, title, featuredImage.url, buildPayload, router]);
+
+  return (
+    <div className="h-screen flex flex-col bg-[#f4f5f7] font-sans selection:bg-[#F15C20] selection:text-white">
+      {/* ── Top Bar ───────────────────────────────────────────── */}
+      <header className="shrink-0 h-14 bg-white border-b border-gray-200 px-6 flex items-center justify-between gap-4 z-20">
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => router.push("/dashboard/posts")}
+            className="text-xs font-semibold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
+          >
+            ← Posts
+          </button>
+          <span className="text-gray-300">|</span>
+          <span className="text-sm font-semibold text-gray-900 truncate max-w-[200px] sm:max-w-[300px]">
+            {title || "Untitled Post"}
+          </span>
+        </div>
+
+        {/* Live stats & status badge */}
+        <div className="hidden md:flex items-center gap-3 text-xs text-gray-400">
           <span>{stats.words.toLocaleString()} words</span>
           <span className="text-gray-200">·</span>
           <span>{readTime} min read</span>
@@ -320,7 +352,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
           <button
             onClick={() => save()}
             disabled={saving}
-            className="px-4 py-1.5 text-sm font-medium border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="px-4 py-1.5 text-sm font-medium border border-gray-200 rounded-lg bg-[#F15C20] hover:bg-[#d94d17] text-white transition-colors disabled:opacity-50 shadow-sm"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -422,17 +454,15 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
               >
                 {saving ? "Saving…" : (isEditor ? "Save as Draft" : "Save")}
               </button>
-              {slug && (
-                <a
-                  href={previewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 w-full py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <FiEye size={13} />
-                  Preview
-                </a>
-              )}
+              <button
+                onClick={handlePreview}
+                disabled={saving}
+                type="button"
+                className="flex items-center justify-center gap-1.5 w-full py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <FiEye size={15} className="text-[#F15C20]" />
+                Preview
+              </button>
             </div>
           </div>
 
