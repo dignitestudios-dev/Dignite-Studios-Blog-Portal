@@ -666,7 +666,7 @@ const CustomImage = Image.extend({
 
 // ─── HTML Pretty Formatter ───────────────────────────────────────────────────
 
-function formatHtml(html: string): string {
+export function formatHtml(html: string): string {
   if (!html) return "";
   let pad = 0;
 
@@ -744,7 +744,7 @@ function highlightHtmlVsCode(code: string): string {
 
 // ─── VS Code HTML Editor Component ──────────────────────────────────────────
 
-function VsCodeHtmlEditor({
+export function VsCodeHtmlEditor({
   value,
   onChange,
 }: {
