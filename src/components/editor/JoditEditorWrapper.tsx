@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { FiCode } from "react-icons/fi";
 import { VsCodeHtmlEditor, formatHtml } from "./TiptapEditor";
@@ -40,20 +40,53 @@ export function JoditEditorWrapper({
   onChange,
 }: JoditEditorWrapperProps) {
   const editorRef = useRef<any>(null);
+  const currentValueRef = useRef<string>(contentHtml);
+  const [valueProp, setValueProp] = useState<string>(contentHtml);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const [htmlDialogOpen, setHtmlDialogOpen] = useState(false);
   const [htmlSource, setHtmlSource] = useState("");
   const [copyToast, setCopyToast] = useState(false);
-  const [editorContent, setEditorContent] = useState(contentHtml);
 
-  // Sync initial content once or when externally updated
+  // Sync incoming contentHtml if it changes from external source
   useEffect(() => {
-    if (contentHtml && contentHtml !== editorContent) {
-      setEditorContent(contentHtml);
+    if (contentHtml !== currentValueRef.current) {
+      currentValueRef.current = contentHtml;
+      setValueProp(contentHtml);
+      if (editorRef.current && editorRef.current.value !== contentHtml) {
+        editorRef.current.value = contentHtml;
+      }
     }
   }, [contentHtml]);
 
+  // Handle changes from Jodit without triggering rapid re-renders during fast typing
+  const handleJoditChange = useCallback(
+    (newContent: string) => {
+      currentValueRef.current = newContent;
+
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = setTimeout(() => {
+        onChange({}, newContent);
+      }, 500);
+    },
+    [onChange]
+  );
+
+  const handleJoditBlur = useCallback(
+    (newContent: string) => {
+      currentValueRef.current = newContent;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      onChange({}, newContent);
+    },
+    [onChange]
+  );
+
   const openHtmlDialog = () => {
-    const currentHtml = editorRef.current?.value || editorContent || "";
+    const currentHtml = editorRef.current?.value || currentValueRef.current || "";
     setHtmlSource(formatHtml(currentHtml));
     setHtmlDialogOpen(true);
   };
@@ -62,7 +95,8 @@ export function JoditEditorWrapper({
     if (editorRef.current) {
       editorRef.current.value = htmlSource;
     }
-    setEditorContent(htmlSource);
+    currentValueRef.current = htmlSource;
+    setValueProp(htmlSource);
     onChange({}, htmlSource);
     setHtmlDialogOpen(false);
   };
@@ -71,7 +105,8 @@ export function JoditEditorWrapper({
     if (editorRef.current) {
       editorRef.current.selection.insertHTML(DEFAULT_CTA_HTML);
       const updated = editorRef.current.value;
-      setEditorContent(updated);
+      currentValueRef.current = updated;
+      setValueProp(updated);
       onChange({}, updated);
     }
   };
@@ -158,19 +193,13 @@ export function JoditEditorWrapper({
       </div>
 
       {/* Jodit Editor Area */}
-      <div className="flex-1 min-h-0 relative">
+      <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden">
         <JoditEditor
           ref={editorRef}
-          value={editorContent}
+          value={valueProp}
           config={config}
-          onBlur={(newContent) => {
-            setEditorContent(newContent);
-            onChange({}, newContent);
-          }}
-          onChange={(newContent) => {
-            setEditorContent(newContent);
-            onChange({}, newContent);
-          }}
+          onBlur={handleJoditBlur}
+          onChange={handleJoditChange}
         />
       </div>
 
