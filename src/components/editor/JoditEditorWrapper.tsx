@@ -134,7 +134,7 @@ export function JoditEditorWrapper({
     () => ({
       readonly: false,
       placeholder: "Start writing your blog post...",
-      height: 600,
+      height: "100%",
       minHeight: 400,
       autofocus: false,
       direction: "ltr" as const,
@@ -142,7 +142,7 @@ export function JoditEditorWrapper({
       toolbar: true,
       toolbarAdaptive: false,
       toolbarButtonSize: "middle" as const,
-      toolbarSticky: true,
+      toolbarSticky: false,
       toolbarStickyOffset: 0,
       showCharsCounter: false,
       showWordsCounter: false,
@@ -215,7 +215,7 @@ export function JoditEditorWrapper({
       </div>
 
       {/* Jodit Editor Area */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
         <JoditEditor
           ref={editorRef}
           value={valueProp}

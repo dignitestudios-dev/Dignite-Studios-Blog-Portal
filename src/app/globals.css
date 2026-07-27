@@ -606,23 +606,60 @@ body {
   margin-right: auto !important;
 }
 
-/* ─── Jodit Editor Styling ─────────────────────────────────────────────────── */
-/* Let Jodit manage its own height via the config height/minHeight props.
-   Do NOT force height:100% or overflow:hidden on the container — that
-   causes the toolbar to measure at 0px and become invisible. */
-
-.jodit-container {
-  border: none !important;
+/* ─── Jodit Normal Mode Full Height & Full Content Scroll Fix ─────────────── */
+div:has(> .jodit-container),
+.jodit-react-container {
+  height: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
 }
 
-.jodit-container .jodit-toolbar-box,
-.jodit-container .jodit-toolbar__box {
+.jodit-container:not(.jodit_fullsize) {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+  width: 100% !important;
+}
+
+.jodit-container:not(.jodit_fullsize) .jodit-toolbar__box,
+.jodit-container:not(.jodit_fullsize) .jodit-toolbar-box,
+.jodit-container:not(.jodit_fullsize) .jodit-toolbar-editor {
+  flex: 0 0 auto !important;
   border-bottom: 1px solid #e5e7eb !important;
   background-color: #ffffff !important;
   z-index: 10 !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
 }
 
-.jodit-container .jodit-wysiwyg {
+.jodit-container:not(.jodit_fullsize) .jodit-work-area {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+}
+
+.jodit-container:not(.jodit_fullsize) .jodit-wysiwyg {
+  flex: 1 1 0% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   padding: 28px 36px !important;
   box-sizing: border-box !important;
+  width: 100% !important;
 }
