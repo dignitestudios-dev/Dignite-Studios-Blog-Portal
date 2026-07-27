@@ -123,7 +123,7 @@ export function JoditEditorWrapper({
       theme: "default",
       toolbarAdaptive: false,
       toolbarButtonSize: "middle" as const,
-      toolbarSticky: true,
+      toolbarSticky: false,
       toolbarStickyOffset: 0,
       enableDragAndDropFileToEditor: true,
       uploader: {
