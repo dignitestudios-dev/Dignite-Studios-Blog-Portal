@@ -2,15 +2,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
-import dynamic from "next/dynamic";
-const JoditEditorWrapper = dynamic(() => import("@/components/editor/JoditEditorWrapper").then((m) => m.JoditEditorWrapper), {
-  ssr: false,
-  loading: () => (
-    <div className="h-[400px] flex items-center justify-center border border-gray-200 rounded-xl bg-gray-50">
-      <p className="text-gray-500">Loading editor...</p>
-    </div>
-  )
-});
+import { JoditEditorWrapper } from "./JoditEditorWrapper";
 import { CategorySelect } from "@/components/editor/CategorySelect";
 import { FeaturedImageUpload } from "@/components/editor/FeaturedImageUpload";
 import { SeoData } from "@/components/seo/SeoSidebar";
