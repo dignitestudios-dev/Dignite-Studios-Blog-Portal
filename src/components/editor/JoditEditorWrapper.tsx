@@ -8,7 +8,6 @@ import React, {
   useMemo,
 } from "react";
 import dynamic from "next/dynamic";
-import "jodit/es2021/jodit.min.css";
 import { FiCode } from "react-icons/fi";
 import { VsCodeHtmlEditor, formatHtml } from "./TiptapEditor";
 import {
@@ -20,12 +19,14 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
-// Dynamically import JoditEditor to avoid SSR issues with window/document
-const JoditEditor = dynamic(() => import("jodit-react"), {
+// Dynamically import the client-only module that bundles both jodit CSS and
+// jodit-react together. This avoids SSR resolution of jodit's CSS which
+// references browser-only resources and breaks on Vercel/Turbopack.
+const JoditEditor = dynamic(() => import("./JoditEditorClient"), {
   ssr: false,
   loading: () => (
-    <div className="h-[400px] flex items-center justify-center border border-gray-200 rounded-xl bg-gray-50">
-      <p className="text-gray-500">Loading jodit editor...</p>
+    <div className="h-[500px] flex items-center justify-center bg-gray-50">
+      <p className="text-gray-400 text-sm">Loading editor...</p>
     </div>
   ),
 });
@@ -36,11 +37,11 @@ interface JoditEditorWrapperProps {
 }
 
 // Exact CTA Banner structure and style from previous Tiptap implementation
-export const DEFAULT_CTA_HTML = `<div data-type="cta-banner" class="cta-banner not-prose" data-heading="Get Clear On Your Next Move" data-paragraph="Choosing the right enterprise mobile app development services can define your project’s success. Let our experts help you plan, design and build a solution which truly meets the business needs." data-button-text="Get Started Today" data-button-href="#" data-cta-type="link" data-input-placeholder="Enter your email..." style="border-radius: 20px; background-color: #F15C20; padding: 40px 6% 36px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; width: 100%; overflow: hidden; margin: 40px 0;">
+export const DEFAULT_CTA_HTML = `<div data-type="cta-banner" class="cta-banner not-prose" data-heading="Get Clear On Your Next Move" data-paragraph="Choosing the right enterprise mobile app development services can define your project's success. Let our experts help you plan, design and build a solution which truly meets the business needs." data-button-text="Get Started Today" data-button-href="#" data-cta-type="link" data-input-placeholder="Enter your email..." style="border-radius: 20px; background-color: #F15C20; padding: 40px 6% 36px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; width: 100%; overflow: hidden; margin: 40px 0;">
   <div style="margin-bottom: 14px;">
     <h2 style="margin: 0; font-size: 30px; font-weight: 700; line-height: 1.25; color: #ffffff; word-break: break-word; text-align: center;">Get Clear On Your Next Move</h2>
   </div>
-  <p style="margin: 0 0 28px; font-size: 15px; color: rgba(255, 255, 255, 0.92); line-height: 1.5; word-break: break-word; overflow-wrap: break-word;">Choosing the right enterprise mobile app development services can define your project’s success. Let our experts help you plan, design and build a solution which truly meets the business needs.</p>
+  <p style="margin: 0 0 28px; font-size: 15px; color: rgba(255, 255, 255, 0.92); line-height: 1.5; word-break: break-word; overflow-wrap: break-word;">Choosing the right enterprise mobile app development services can define your project's success. Let our experts help you plan, design and build a solution which truly meets the business needs.</p>
   <div style="display: inline-flex; align-items: center; justify-content: center; gap: 0px;">
     <a href="#" style="display: inline-flex; align-items: center; justify-content: center; background: #ffffff; color: #F15C20; text-decoration: none; font-size: 14px; font-weight: 600; padding: 0 32px; border-radius: 50px; white-space: nowrap; line-height: 1; min-width: 160px; height: 52px; box-sizing: border-box;">Get Started Today</a>
     <a href="#" style="display: inline-flex; align-items: center; justify-content: center; background: #ffffff; color: #F15C20; text-decoration: none; width: 52px; height: 52px; border-radius: 50px; flex-shrink: 0; box-sizing: border-box;">
@@ -126,20 +127,22 @@ export function JoditEditorWrapper({
     }
   };
 
+  // Use a fixed pixel height so Jodit can measure its container on mount.
+  // height: "100%" fails when parent hasn't resolved layout yet, causing
+  // the toolbar to render with 0 height and become invisible.
   const config = useMemo(
     () => ({
       readonly: false,
       placeholder: "Start writing your blog post...",
-      height: "100%",
-      minHeight: 500,
-      maxHeight: "100%",
+      height: 600,
+      minHeight: 400,
       autofocus: false,
       direction: "ltr" as const,
       theme: "default",
       toolbar: true,
       toolbarAdaptive: false,
       toolbarButtonSize: "middle" as const,
-      toolbarSticky: false,
+      toolbarSticky: true,
       toolbarStickyOffset: 0,
       showCharsCounter: false,
       showWordsCounter: false,
@@ -188,7 +191,7 @@ export function JoditEditorWrapper({
 
   return (
     <div className="w-full h-full flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-      {/* Top Control Bar — Clean single location for CTA and Formatted HTML Source */}
+      {/* Top Control Bar — CTA and Formatted HTML Source */}
       <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <button
@@ -212,7 +215,7 @@ export function JoditEditorWrapper({
       </div>
 
       {/* Jodit Editor Area */}
-      <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0">
         <JoditEditor
           ref={editorRef}
           value={valueProp}
