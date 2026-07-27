@@ -1,7 +1,14 @@
 "use client";
 
-import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import dynamic from "next/dynamic";
+import "jodit/es2021/jodit.min.css";
 import { FiCode } from "react-icons/fi";
 import { VsCodeHtmlEditor, formatHtml } from "./TiptapEditor";
 import {
@@ -14,7 +21,14 @@ import {
 } from "@/components/ui/dialog";
 
 // Dynamically import JoditEditor to avoid SSR issues with window/document
-const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
+const JoditEditor = dynamic(() => import("jodit-react"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] flex items-center justify-center border border-gray-200 rounded-xl bg-gray-50">
+      <p className="text-gray-500">Loading jodit editor...</p>
+    </div>
+  ),
+});
 
 interface JoditEditorWrapperProps {
   contentHtml?: string;
@@ -71,7 +85,7 @@ export function JoditEditorWrapper({
         onChange({}, newContent);
       }, 500);
     },
-    [onChange]
+    [onChange],
   );
 
   const handleJoditBlur = useCallback(
@@ -82,11 +96,12 @@ export function JoditEditorWrapper({
       }
       onChange({}, newContent);
     },
-    [onChange]
+    [onChange],
   );
 
   const openHtmlDialog = () => {
-    const currentHtml = editorRef.current?.value || currentValueRef.current || "";
+    const currentHtml =
+      editorRef.current?.value || currentValueRef.current || "";
     setHtmlSource(formatHtml(currentHtml));
     setHtmlDialogOpen(true);
   };
@@ -164,7 +179,7 @@ export function JoditEditorWrapper({
         lineHeight: "1.7",
       },
     }),
-    []
+    [],
   );
 
   return (
@@ -266,3 +281,5 @@ export function JoditEditorWrapper({
     </div>
   );
 }
+
+export default JoditEditorWrapper;
