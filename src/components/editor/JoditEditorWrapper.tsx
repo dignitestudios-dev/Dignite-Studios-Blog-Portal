@@ -37,12 +37,14 @@ interface JoditEditorWrapperProps {
 }
 
 // Exact CTA Banner structure and style from previous Tiptap implementation
+// The button container div has contenteditable="false" to prevent users from
+// accidentally editing/pasting into the buttons which destroys their styling.
 export const DEFAULT_CTA_HTML = `<div data-type="cta-banner" class="cta-banner not-prose" data-heading="Get Clear On Your Next Move" data-paragraph="Choosing the right enterprise mobile app development services can define your project's success. Let our experts help you plan, design and build a solution which truly meets the business needs." data-button-text="Get Started Today" data-button-href="#" data-cta-type="link" data-input-placeholder="Enter your email..." style="border-radius: 20px; background-color: #F15C20; padding: 40px 6% 36px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; width: 100%; overflow: hidden; margin: 40px 0;">
   <div style="margin-bottom: 14px;">
     <h2 style="margin: 0; font-size: 30px; font-weight: 700; line-height: 1.25; color: #ffffff; word-break: break-word; text-align: center;">Get Clear On Your Next Move</h2>
   </div>
   <p style="margin: 0 0 28px; font-size: 15px; color: rgba(255, 255, 255, 0.92); line-height: 1.5; word-break: break-word; overflow-wrap: break-word;">Choosing the right enterprise mobile app development services can define your project's success. Let our experts help you plan, design and build a solution which truly meets the business needs.</p>
-  <div style="display: inline-flex; align-items: center; justify-content: center; gap: 0px;">
+  <div contenteditable="false" style="display: inline-flex; align-items: center; justify-content: center; gap: 0px;">
     <a href="#" style="display: inline-flex; align-items: center; justify-content: center; background: #ffffff; color: #F15C20; text-decoration: none; font-size: 14px; font-weight: 600; padding: 0 32px; border-radius: 50px; white-space: nowrap; line-height: 1; min-width: 160px; height: 52px; box-sizing: border-box;">Get Started Today</a>
     <a href="#" style="display: inline-flex; align-items: center; justify-content: center; background: #ffffff; color: #F15C20; text-decoration: none; width: 52px; height: 52px; border-radius: 50px; flex-shrink: 0; box-sizing: border-box;">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right-icon lucide-arrow-up-right"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
@@ -127,9 +129,6 @@ export function JoditEditorWrapper({
     }
   };
 
-  // Use a fixed pixel height so Jodit can measure its container on mount.
-  // height: "100%" fails when parent hasn't resolved layout yet, causing
-  // the toolbar to render with 0 height and become invisible.
   const config = useMemo(
     () => ({
       readonly: false,
@@ -151,6 +150,24 @@ export function JoditEditorWrapper({
       uploader: {
         insertImageAsBase64URI: true,
       },
+      // Paste processing — keep inline styles so CTA and formatted pastes
+      // don't lose their visual appearance
+      askBeforePasteFromWord: false,
+      askBeforePasteHTML: false,
+      processPasteHTML: true,
+      defaultActionOnPaste: "insert_clear_html" as const,
+      defaultActionOnPasteFromWord: "insert_clear_html" as const,
+      // Clean HTML — preserve data attributes and styles on CTA banner elements
+      cleanHTML: {
+        removeEmptyElements: false,
+        fillEmptyParagraph: true,
+        replaceNBSP: false,
+        allowTags: false as const,
+        denyTags: false as const,
+      },
+      // Preserve all inline styles — critical for CTA buttons
+      allowResizeX: false,
+      disablePlugins: [] as string[],
       buttons: [
         "bold",
         "italic",

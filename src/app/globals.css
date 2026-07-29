@@ -448,87 +448,141 @@ body {
 
 /* ─── Jodit Editor Content Custom Styling Rules ─────────────────────────── */
 .jodit-wysiwyg {
-  padding: 24px 32px !important;
   font-family: system-ui, -apple-system, sans-serif !important;
   font-size: 16px !important;
   line-height: 1.75 !important;
   color: #1f2937 !important;
 }
 
-.jodit-wysiwyg h1 {
-  font-size: 2.25rem !important;
-  font-weight: 800 !important;
-  line-height: 1.25 !important;
-  margin-top: 1.6em !important;
-  margin-bottom: 0.6em !important;
-  color: #111827 !important;
+/* Paragraphs */
+.jodit-wysiwyg p {
+  margin-top: 0 !important;
+  margin-bottom: 1em !important;
 }
 
-.jodit-wysiwyg h2 {
+/* ── Headings ─────────────────────────────────────────────────────────────── */
+.jodit-wysiwyg > h1,
+.jodit-wysiwyg > h1:first-child {
+  font-size: 2.25rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
+  color: #111827 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.jodit-wysiwyg > h2 {
   font-size: 1.75rem !important;
   font-weight: 700 !important;
-  line-height: 1.3 !important;
+  line-height: 1.25 !important;
   margin-top: 1.4em !important;
   margin-bottom: 0.5em !important;
   color: #111827 !important;
+  letter-spacing: -0.01em !important;
 }
 
-.jodit-wysiwyg h3 {
-  font-size: 1.35rem !important;
+.jodit-wysiwyg > h3 {
+  font-size: 1.375rem !important;
   font-weight: 600 !important;
-  line-height: 1.4 !important;
+  line-height: 1.35 !important;
   margin-top: 1.2em !important;
   margin-bottom: 0.4em !important;
   color: #111827 !important;
 }
 
-.jodit-wysiwyg h4,
-.jodit-wysiwyg h5,
-.jodit-wysiwyg h6 {
-  font-size: 1.15rem !important;
+.jodit-wysiwyg > h4 {
+  font-size: 1.125rem !important;
   font-weight: 600 !important;
+  line-height: 1.4 !important;
   margin-top: 1em !important;
   margin-bottom: 0.4em !important;
   color: #111827 !important;
 }
 
-.jodit-wysiwyg ul {
-  list-style-type: disc;
-  padding-left: 1.75rem !important;
+.jodit-wysiwyg > h5,
+.jodit-wysiwyg > h6 {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
   margin-top: 1em !important;
-  margin-bottom: 1em !important;
+  margin-bottom: 0.35em !important;
+  color: #374151 !important;
+}
+
+/* First heading in editor should not have extra top margin */
+.jodit-wysiwyg > h1:first-child,
+.jodit-wysiwyg > h2:first-child,
+.jodit-wysiwyg > h3:first-child,
+.jodit-wysiwyg > h4:first-child {
+  margin-top: 0 !important;
+}
+
+/* ── Lists — inherit list-style-type from toolbar selection ───────────────── */
+.jodit-wysiwyg ul {
+  padding-left: 1.75rem !important;
+  margin-top: 0.75em !important;
+  margin-bottom: 0.75em !important;
+}
+
+/* Only set default disc if no style attribute is set by the toolbar */
+.jodit-wysiwyg ul:not([style*="list-style-type"]) {
+  list-style-type: disc !important;
 }
 
 .jodit-wysiwyg ol {
-  list-style-type: decimal;
   padding-left: 1.75rem !important;
-  margin-top: 1em !important;
-  margin-bottom: 1em !important;
+  margin-top: 0.75em !important;
+  margin-bottom: 0.75em !important;
+}
+
+.jodit-wysiwyg ol:not([style*="list-style-type"]) {
+  list-style-type: decimal !important;
 }
 
 .jodit-wysiwyg li {
-  margin-top: 0.35em !important;
-  margin-bottom: 0.35em !important;
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
 }
 
-.jodit-wysiwyg a {
+/* Nested lists */
+.jodit-wysiwyg ul ul,
+.jodit-wysiwyg ol ul {
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
+}
+
+.jodit-wysiwyg ul ul:not([style*="list-style-type"]) {
+  list-style-type: circle !important;
+}
+
+.jodit-wysiwyg ul ol,
+.jodit-wysiwyg ol ol {
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
+}
+
+/* ── Links — only style links NOT inside CTA banners ─────────────────────── */
+.jodit-wysiwyg a:not([data-type="cta-banner"] a):not(.cta-banner a) {
   color: #F15C20 !important;
   text-decoration: underline !important;
   font-weight: 500 !important;
 }
 
+/* ── Blockquote ──────────────────────────────────────────────────────────── */
 .jodit-wysiwyg blockquote {
   border-left: 4px solid #F15C20 !important;
   padding-left: 1.25rem !important;
-  margin: 1.5em 0 !important;
+  margin: 1.25em 0 !important;
   font-style: italic !important;
   color: #4b5563 !important;
 }
 
+/* ── Table ────────────────────────────────────────────────────────────────── */
 .jodit-wysiwyg table {
   width: 100% !important;
   border-collapse: collapse !important;
-  margin: 1.5em 0 !important;
+  margin: 1.25em 0 !important;
 }
 
 .jodit-wysiwyg th,
@@ -542,23 +596,70 @@ body {
   font-weight: 600 !important;
 }
 
-/* Explicit CTA Banner overrides inside Jodit Editor */
-.jodit-wysiwyg .cta-banner h2,
-.jodit-wysiwyg [data-type="cta-banner"] h2 {
+/* ── Horizontal Rule ─────────────────────────────────────────────────────── */
+.jodit-wysiwyg hr {
+  border: none !important;
+  border-top: 2px solid #e5e7eb !important;
+  margin: 1.5em 0 !important;
+}
+
+/* ══ CTA Banner Protection ════════════════════════════════════════════════ */
+/* These rules use high specificity to prevent editor content styles from
+   bleeding into the CTA banner component. The CTA uses all-inline styles,
+   so we must ensure our general rules don't override them. */
+
+.jodit-wysiwyg div.cta-banner,
+.jodit-wysiwyg div[data-type="cta-banner"] {
+  all: revert !important;
+  border-radius: 20px !important;
+  background-color: #F15C20 !important;
+  padding: 40px 6% 36px !important;
+  text-align: center !important;
+  font-family: Arial, sans-serif !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  margin: 40px 0 !important;
+  display: block !important;
+}
+
+.jodit-wysiwyg div.cta-banner h2,
+.jodit-wysiwyg div[data-type="cta-banner"] h2 {
   color: #ffffff !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  font-size: 30px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  letter-spacing: normal !important;
+  text-align: center !important;
 }
 
-.jodit-wysiwyg .cta-banner p,
-.jodit-wysiwyg [data-type="cta-banner"] p {
+.jodit-wysiwyg div.cta-banner p,
+.jodit-wysiwyg div[data-type="cta-banner"] p {
   color: rgba(255, 255, 255, 0.92) !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  margin: 0 0 28px !important;
+  padding: 0 !important;
 }
 
-.jodit-wysiwyg .cta-banner a,
-.jodit-wysiwyg [data-type="cta-banner"] a {
+.jodit-wysiwyg div.cta-banner a,
+.jodit-wysiwyg div[data-type="cta-banner"] a {
   color: #F15C20 !important;
   text-decoration: none !important;
+  background: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 50px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.jodit-wysiwyg div.cta-banner svg,
+.jodit-wysiwyg div[data-type="cta-banner"] svg {
+  color: #F15C20 !important;
+  stroke: #F15C20 !important;
 }
 
 /* ─── Jodit Fullscreen Mode Overrides ─────────────────────────────────────── */
