@@ -54,8 +54,6 @@
     "clsx": "^2.1.1",
     "editorjs-html": "^4.0.5",
     "editorjs-hyperlink": "^1.0.6",
-    "jodit": "^4.13.10",
-    "jodit-react": "^5.3.21",
     "lucide-react": "^1.17.0",
     "mongoose": "^9.6.3",
     "next": "16.2.7",

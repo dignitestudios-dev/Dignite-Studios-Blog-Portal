@@ -807,7 +807,7 @@ export function VsCodeHtmlEditor({
           <pre
             ref={preRef}
             aria-hidden="true"
-            className="absolute inset-0 p-4 font-mono text-sm leading-6 whitespace-pre overflow-auto pointer-events-none text-[#d4d4d4] select-none m-0 border-none"
+            className="absolute inset-0 p-4 font-mono text-sm leading-6 whitespace-pre-wrap break-all overflow-auto pointer-events-none text-[#d4d4d4] select-none m-0 border-none"
             dangerouslySetInnerHTML={{ __html: highlightedCode + "\n" }}
           />
 
@@ -817,7 +817,7 @@ export function VsCodeHtmlEditor({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onScroll={handleScroll}
-            className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 bg-transparent text-transparent caret-white focus:outline-none resize-none whitespace-pre overflow-auto selection:bg-[#264f78]/60 m-0 border-none"
+            className="absolute inset-0 w-full h-full p-4 font-mono text-sm leading-6 bg-transparent text-transparent caret-white focus:outline-none resize-none whitespace-pre-wrap break-all overflow-auto selection:bg-[#264f78]/60 m-0 border-none"
             placeholder="<!-- Insert or edit HTML source code here... -->"
             spellCheck={false}
           />
@@ -908,6 +908,7 @@ export function TiptapEditor({
   onChange,
 }: TiptapEditorProps) {
   const isFirstRender = useRef(true);
+  const lastEmittedJson = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const savedSelection = useRef<any>(null);
@@ -918,7 +919,7 @@ export function TiptapEditor({
   const [htmlDialogOpen, setHtmlDialogOpen] = useState(false);
   const [htmlSource, setHtmlSource] = useState("");
   const [copyToast, setCopyToast] = useState(false);
-  // Force re-render on selection change so inTable detection is live
+  // Force re-render on selection change so active state and inTable detection is live
   const [, setSelTick] = useState(0);
 
   // Link dialog state
@@ -966,7 +967,10 @@ export function TiptapEditor({
     ],
     content: initialContent,
     onUpdate({ editor }) {
-      onChange(editor.getJSON(), editor.getHTML());
+      const json = editor.getJSON();
+      const html = editor.getHTML();
+      lastEmittedJson.current = JSON.stringify(json);
+      onChange(json, html);
     },
     onSelectionUpdate() {
       setSelTick((t) => t + 1);
@@ -980,32 +984,41 @@ export function TiptapEditor({
     immediatelyRender: false,
   });
 
+  // Sync external content changes into TipTap, avoiding reset on internal edits
   useEffect(() => {
     if (!editor) return;
     if (isFirstRender.current) {
       isFirstRender.current = false;
+      lastEmittedJson.current = JSON.stringify(editor.getJSON());
       return;
     }
-    const current = JSON.stringify(editor.getJSON());
     const incoming = JSON.stringify(content);
     if (
-      current !== incoming &&
+      incoming &&
+      incoming !== lastEmittedJson.current &&
       Object.keys(content).length > 0 &&
       (content as any).type === "doc"
     ) {
+      lastEmittedJson.current = incoming;
       editor.commands.setContent(content);
     }
   }, [content, editor]);
 
-  // Bulletproof state synchronization for toolbar updates
+  // Bulletproof selection and transaction state synchronization for toolbar active indicators
   useEffect(() => {
     if (!editor) return;
-    const handleTransaction = () => {
+    const handleUpdateTick = () => {
       setSelTick((t) => t + 1);
     };
-    editor.on("transaction", handleTransaction);
+    editor.on("selectionUpdate", handleUpdateTick);
+    editor.on("transaction", handleUpdateTick);
+    editor.on("focus", handleUpdateTick);
+    editor.on("blur", handleUpdateTick);
     return () => {
-      editor.off("transaction", handleTransaction);
+      editor.off("selectionUpdate", handleUpdateTick);
+      editor.off("transaction", handleUpdateTick);
+      editor.off("focus", handleUpdateTick);
+      editor.off("blur", handleUpdateTick);
     };
   }, [editor]);
 
@@ -1220,8 +1233,8 @@ export function TiptapEditor({
 
         <Divider />
 
-        {/* Headings H2–H6 */}
-        {([2, 3, 4, 5, 6] as const).map((level) => (
+        {/* Headings H1–H6 */}
+        {([1, 2, 3, 4, 5, 6] as const).map((level) => (
           <ToolbarButton
             key={level}
             onClick={() =>

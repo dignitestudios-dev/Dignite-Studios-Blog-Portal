@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
-import { JoditEditorWrapper } from "./JoditEditorWrapper";
+import { TiptapEditor } from "./TiptapEditor";
 import { CategorySelect } from "@/components/editor/CategorySelect";
 import { FeaturedImageUpload } from "@/components/editor/FeaturedImageUpload";
 import { SeoData } from "@/components/seo/SeoSidebar";
@@ -396,7 +396,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
           {/* Editor card — fills remaining height, toolbar inside always visible */}
           <div className="flex-1 min-h-0 px-6 pb-5 pt-3 overflow-hidden">
             <div className="h-full bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-              <JoditEditorWrapper contentHtml={contentHtml} onChange={handleContentChange} />
+              <TiptapEditor content={content} contentHtml={contentHtml} onChange={handleContentChange} />
             </div>
           </div>
         </div>
