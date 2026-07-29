@@ -980,6 +980,38 @@ export function TiptapEditor({
         class:
           "prose prose-sm max-w-none min-h-[400px] focus:outline-none px-1 text-gray-900",
       },
+      transformPastedHTML(html) {
+        if (!html) return html;
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+
+          // Remove messy legacy font elements
+          doc.querySelectorAll("font").forEach((el) => {
+            const parent = el.parentNode;
+            while (el.firstChild) parent?.insertBefore(el.firstChild, el);
+            parent?.removeChild(el);
+          });
+
+          // Strip inline styles that cause weird gaps and font overrides (keep CTA banner styles intact)
+          doc.querySelectorAll("*").forEach((el) => {
+            const isCta =
+              el.closest('[data-type="cta-banner"]') ||
+              el.classList.contains("cta-banner");
+            if (!isCta) {
+              el.removeAttribute("style");
+              el.removeAttribute("class");
+              el.removeAttribute("face");
+              el.removeAttribute("size");
+              el.removeAttribute("color");
+            }
+          });
+
+          return doc.body.innerHTML;
+        } catch {
+          return html;
+        }
+      },
     },
     immediatelyRender: false,
   });
