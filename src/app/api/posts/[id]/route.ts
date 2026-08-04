@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import BlogPost from "@/models/BlogPost";
 import { NextRequest, NextResponse } from "next/server";
 import { generateArticleJsonLd } from "@/lib/seo";
+import slugify from "slugify";
 import { unlink } from "fs/promises";
 import path from "path";
 
@@ -52,10 +53,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   if (body.slug) {
-    let slug = body.slug;
+    // Normalize before uniqueness checking so "My-Post" and "my-post" cannot
+    // both exist — the website resolves slugs case-insensitively.
+    const baseSlug = slugify(body.slug, { lower: true, strict: true });
+    let slug = baseSlug;
     let counter = 1;
     while (await BlogPost.exists({ slug, _id: { $ne: id } })) {
-      slug = `${body.slug}-${counter++}`;
+      slug = `${baseSlug}-${counter++}`;
     }
     body.slug = slug;
   }

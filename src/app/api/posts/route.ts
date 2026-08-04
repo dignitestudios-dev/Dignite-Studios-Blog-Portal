@@ -60,7 +60,12 @@ export async function POST(req: NextRequest) {
     body.publishedAt = null;
   }
 
-  const baseSlug = body.slug || slugify(body.title ?? "untitled", { lower: true, strict: true });
+  // Slugs are always lowercase and hyphenated: the website matches them
+  // case-insensitively, so a mixed-case slug would only produce duplicate URLs.
+  const baseSlug = slugify(body.slug || body.title || "untitled", {
+    lower: true,
+    strict: true,
+  });
   let slug = baseSlug;
   let counter = 1;
 

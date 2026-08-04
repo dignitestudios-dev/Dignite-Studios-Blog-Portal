@@ -105,68 +105,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Tiptap editor prose styles */
-.ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  color: #9ca3af;
-  pointer-events: none;
-  height: 0;
-}
-
-.prose h1 { font-size: 2.25rem; font-weight: 800; margin: 1.5rem 0 0.75rem; line-height: 1.15; letter-spacing: -0.025em; color: #111827; }
-.prose h2 { font-size: 1.75rem; font-weight: 700; margin: 1.25rem 0 0.6rem; line-height: 1.2; letter-spacing: -0.02em; color: #111827; }
-.prose h3 { font-size: 1.375rem; font-weight: 600; margin: 1rem 0 0.5rem; line-height: 1.3; letter-spacing: -0.01em; color: #111827; }
-.prose h4 { font-size: 1.125rem; font-weight: 600; margin: 0.75rem 0 0.4rem; line-height: 1.35; color: #111827; }
-.prose h5 { font-size: 0.95rem; font-weight: 600; margin: 0.75rem 0 0.35rem; line-height: 1.4; color: #374151; }
-.prose h6 { font-size: 0.875rem; font-weight: 600; margin: 0.75rem 0 0.35rem; line-height: 1.4; color: #4b5563; }
-.prose p { margin: 0.6rem 0; line-height: 1.75; }
-.prose ul, .prose ol { padding-left: 1.5rem; margin: 0.5rem 0; }
-.prose ul { list-style-type: disc; }
-.prose ol { list-style-type: decimal; }
-.prose ul ul { list-style-type: circle; }
-.prose ul ul ul { list-style-type: square; }
-.prose li { margin: 0.25rem 0; display: list-item; }
-.prose blockquote { border-left: 4px solid #F15C20; padding-left: 1.25rem; color: #6b7280; margin: 1.25rem 0; font-style: italic; }
-.prose code { background: #f3f4f6; padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.875em; font-family: monospace; }
-.prose pre { background: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
-.prose pre code { background: none; padding: 0; color: inherit; }
-.prose a { color: #F15C20; text-decoration: underline; }
-.prose strong { font-weight: 600; }
-.prose table { border-collapse: collapse; width: 100%; margin: 1rem 0; table-layout: fixed; }
-.prose th, .prose td { border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; text-align: left; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
-.prose th { background: #f9fafb; font-weight: 600; }
-.prose hr { border: none; border-top: 2px solid #e5e7eb; margin: 1.5rem 0; }
-.prose img { max-width: 100%; height: auto; }
-
-/* ─── ProseMirror list markers ──────────────────────────────────────────────── */
-.ProseMirror ul,
-.ProseMirror ol {
-  padding-left: 1.5rem;
-  margin: 0.5rem 0;
-}
-.ProseMirror ul { list-style-type: disc; }
-.ProseMirror ol { list-style-type: decimal; }
-.ProseMirror ul ul { list-style-type: circle; }
-.ProseMirror ul ul ul { list-style-type: square; }
-.ProseMirror li { display: list-item; margin: 0.2rem 0; }
-
-/* ─── ProseMirror table: fixed layout + word-wrap ───────────────────── */
-.ProseMirror table {
-  table-layout: fixed;
-  width: 100%;
-  border-collapse: collapse;
-  overflow: hidden;
-}
-.ProseMirror table td,
-.ProseMirror table th {
-  word-break: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-  min-width: 0;
-  max-width: 0; /* combined with table-layout:fixed forces equal distribution */
-}
-
 /* ─── Accordion animations ────────────────────────────────────────────────── */
 @keyframes accordion-down {
   from { height: 0; opacity: 0; }
@@ -304,149 +242,239 @@ body {
   }
 }
 
-/* Editor.js custom styles */
-.codex-editor__redactor {
-  padding-bottom: 100px !important;
+/* ─────────────────────────────────────────────────────────────────────────────
+   Editor.js
+   Every tool injects its own base CSS, so the rules below only do two things:
+     1. Match the public site's blog typography, so the editor is truly WYSIWYG.
+        Values mirror `.blog-content` in DS-website/components/Blogs/BlogPostPage.
+     2. Recolor Editor.js chrome to the brand orange.
+   Nothing here overrides a tool's structural CSS (list counters, table grid,
+   image tunes) — doing so is what caused the double-bullet issues previously.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Generous tail room so a block menu opened on the last block still has space
+   to expand downward instead of being clipped by the scroll container. */
+.editor-js-container .codex-editor__redactor {
+  padding-bottom: 260px !important;
 }
-.ce-block__content,
-.ce-toolbar__content {
-  max-width: 800px !important;
+
+/* Content column ≈ the 761px the published article renders at. */
+.editor-js-container .ce-block__content,
+.editor-js-container .ce-toolbar__content {
+  max-width: 780px !important;
 }
-.cdx-block {
-  padding: 0.4em 0;
+
+/* ─── Popovers: size to content, never scroll internally ─────────────────────
+   Editor.js caps `.ce-popover__container` with `max-height: var(--max-height)`
+   plus `overflow: hidden`, which turns the block-settings menu into a tiny
+   scrollable box. Releasing the cap lets it show every item at full width.
+   ─────────────────────────────────────────────────────────────────────────── */
+.editor-js-container .ce-popover__container {
+  max-height: none !important;
+  height: auto !important;
+  width: max-content !important;
+  min-width: 210px !important;
+  max-width: 340px !important;
+  overflow: visible !important;
 }
-/* Fix double bullets in Editor.js */
-.editor-js-container .cdx-list {
-  padding-left: 1.5rem !important;
-  margin: 0.5rem 0 !important;
+
+.editor-js-container .ce-popover__items {
+  max-height: none !important;
+  overflow: visible !important;
 }
-.editor-js-container ul.cdx-list {
-  list-style-type: disc !important;
+
+/* The inline toolbar is a single horizontal row — keep it hugging its buttons. */
+.editor-js-container .ce-popover--inline .ce-popover__container {
+  min-width: max-content !important;
+  max-width: none !important;
 }
-.editor-js-container ol.cdx-list {
-  list-style-type: decimal !important;
+
+.editor-js-container .ce-popover-item__title {
+  white-space: nowrap;
 }
-.editor-js-container .cdx-list__item {
-  display: list-item !important;
+
+/* Nested "Convert to" submenu must escape its parent, not be clipped by it. */
+.editor-js-container .ce-popover--nested .ce-popover__container {
+  overflow: visible !important;
 }
-/* Hide Editor.js custom pseudo-element bullets to prevent double bullets */
-.editor-js-container .cdx-list__item::before,
-.editor-js-container .cdx-list__item::after {
-  display: none !important;
-  content: none !important;
+
+.editor-js-container .cdx-block {
+  padding: 0.3em 0;
 }
-.ce-header {
+
+/* ─── Typography (mirrors the published article) ─────────────────────────── */
+.editor-js-container .ce-paragraph {
+  font-size: 18px;
+  line-height: 150%;
+  color: #1f222e;
+}
+
+/* Headings carry NO vertical margin of their own.
+   `Toolbar.move()` only aligns the drag handle to a block's first line when
+   that line starts within 20px of the block's top; otherwise it falls back to
+   the top of the block and the handle visibly drops out of line. A margin on
+   the heading itself pushes the text past that threshold, so the heading
+   rhythm lives on the .ce-block wrapper below instead — a margin there shifts
+   the whole block, leaving the text flush with its own top. */
+.editor-js-container .ce-header {
+  margin: 0 !important;
+  padding: 4px 0 3px !important;
+  color: #1f222e;
   font-weight: 700;
-  color: #111827;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
 }
-.cdx-marker {
-  background: rgba(241, 92, 32, 0.2);
-  padding: 0 4px;
-  border-radius: 2px;
+.editor-js-container h2.ce-header {
+  font-size: 1.6875rem;
+  line-height: 2.0625rem;
 }
-.ce-paragraph {
-  line-height: 1.7;
+.editor-js-container h3.ce-header {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  color: #222;
+}
+.editor-js-container h4.ce-header {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.editor-js-container h5.ce-header,
+.editor-js-container h6.ce-header {
+  font-size: 0.9375rem;
+  line-height: 1.4rem;
   color: #374151;
 }
-.cdx-quote {
-  border-left: 3px solid #F15C20;
-  padding-left: 1rem;
-  color: #6b7280;
-  margin: 1.5rem 0;
-  font-style: italic;
+
+/* Heading spacing, applied to the block wrapper so handle alignment survives. */
+.editor-js-container .ce-block:has(> .ce-block__content > h2.ce-header) {
+  margin-top: 2rem;
 }
-.ce-block--selected .ce-block__content {
-  background: rgba(241, 92, 32, 0.05) !important;
+.editor-js-container .ce-block:has(> .ce-block__content > h3.ce-header) {
+  margin-top: 1.5rem;
 }
+.editor-js-container .ce-block:has(> .ce-block__content > h4.ce-header) {
+  margin-top: 1.25rem;
+}
+.editor-js-container .ce-block:has(> .ce-block__content > h5.ce-header),
+.editor-js-container .ce-block:has(> .ce-block__content > h6.ce-header) {
+  margin-top: 1rem;
+}
+/* No leading gap when a heading is the very first block. */
+.editor-js-container .ce-block:first-child {
+  margin-top: 0;
+}
+
+.editor-js-container .cdx-list__item {
+  font-size: 18px;
+  line-height: 150%;
+  color: #1f222e;
+}
+
 .editor-js-container a {
-  color: #F15C20;
+  color: #f97316;
   text-decoration: underline;
   cursor: pointer;
 }
-.editor-js-container a:hover {
-  color: #d84e18;
+
+.editor-js-container .cdx-marker {
+  background: rgba(241, 92, 32, 0.22);
+  padding: 0 3px;
+  border-radius: 2px;
 }
-.editor-js-container table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1.5rem 0;
+
+.editor-js-container .inline-code,
+.editor-js-container .cdx-inline-code {
+  background: #f3f4f6;
+  color: #ef4444;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
 }
-.editor-js-container td {
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem 0.75rem;
-}
+
+.editor-js-container .cdx-quote,
 .editor-js-container blockquote {
-  border-left: 3px solid #F15C20;
+  border-left: 4px solid #f97316;
   padding-left: 1rem;
-  font-style: italic;
-  color: #6b7280;
   margin: 1.5rem 0;
+  font-style: italic;
+  color: #555;
 }
-.editor-js-container pre {
+
+.editor-js-container .ce-code__textarea {
   background: #1f2937;
   color: #f9fafb;
+  border: none;
+  border-radius: 0.5rem;
   padding: 1rem;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin: 1.5rem 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.6;
 }
-.editor-js-container code {
-  background: #f3f4f6;
-  padding: 0.2em 0.4em;
+
+.editor-js-container .image-tool__image-picture {
+  border-radius: 12px;
+}
+
+/* ─── CTA block ──────────────────────────────────────────────────────────── */
+.editor-js-container .cta-tool [contenteditable]:focus {
+  outline: 2px dashed rgba(255, 255, 255, 0.65);
+  outline-offset: 3px;
   border-radius: 4px;
-  font-size: 0.85em;
-  font-family: monospace;
 }
-.editor-js-container pre code {
-  background: transparent;
-  padding: 0;
-}
-.ce-inline-tool-input {
-  border-radius: 6px !important;
-  border: 1px solid #e5e7eb !important;
-}
-.ce-inline-tool-input:focus {
-  border-color: #F15C20 !important;
-  box-shadow: 0 0 0 1px #F15C20 !important;
+.editor-js-container .cta-tool button[contenteditable] {
+  cursor: text;
 }
 
-/* Editor.js active/primary button overrides to match brand orange */
-.ce-inline-tool--active {
-  color: #F15C20 !important;
-}
-.ce-inline-tool-input__button {
-  background-color: #F15C20 !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 6px !important;
-  padding: 6px 12px !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  transition: background-color 0.2s !important;
-}
-.ce-inline-tool-input__button:hover {
-  background-color: #d84e18 !important;
+/* ─── Editor.js chrome, recolored to brand ───────────────────────────────── */
+.ce-block--selected .ce-block__content {
+  background: rgba(241, 92, 32, 0.06);
 }
 
-/* Input elements border focus */
-.ce-inline-tool-input__text:focus,
-.ce-inline-tool-input__target:focus,
-.ce-inline-tool-input__rel:focus {
-  border-color: #F15C20 !important;
-  outline: none !important;
-  box-shadow: 0 0 0 1px #F15C20 !important;
+.ce-inline-tool--active,
+.ce-popover-item--active .ce-popover-item__icon,
+.ce-popover-item--active .ce-popover-item__title {
+  color: #f15c20 !important;
 }
 
-/* Make image uploader button and other block uploader buttons highlight orange on hover */
-.custom-image-block button:not([disabled]):hover {
-  border-color: #F15C20 !important;
-  color: #F15C20 !important;
+.ce-popover-item--focused .ce-popover-item__icon,
+.ce-popover-item:hover .ce-popover-item__icon {
+  color: #f15c20;
 }
 
-/* Styled active state for uploader icon */
-.custom-image-block button span.animate-spin {
-  color: #F15C20 !important;
+.ce-toolbar__plus:hover,
+.ce-toolbar__settings-btn:hover {
+  color: #f15c20;
 }
 
+.ce-inline-toolbar,
+.ce-popover {
+  border-radius: 10px;
+}
+
+/* ─── Alignment & image width tunes ──────────────────────────────────────────
+   Driven by data attributes the tunes set on the block content wrapper, so the
+   editor preview matches the `text-align` / `width:%` that gets serialized.
+   ─────────────────────────────────────────────────────────────────────────── */
+.editor-js-container [data-ds-align="left"] { text-align: left; }
+.editor-js-container [data-ds-align="center"] { text-align: center; }
+.editor-js-container [data-ds-align="right"] { text-align: right; }
+
+/* Images are block-level, so text-align alone will not move them. */
+.editor-js-container .image-tool__image {
+  width: 100%;
+  transition: width 0.15s ease;
+}
+.editor-js-container [data-ds-width="25"] .image-tool__image { width: 25%; }
+.editor-js-container [data-ds-width="50"] .image-tool__image { width: 50%; }
+.editor-js-container [data-ds-width="75"] .image-tool__image { width: 75%; }
+.editor-js-container [data-ds-width="100"] .image-tool__image { width: 100%; }
+
+.editor-js-container [data-ds-align="left"] .image-tool__image {
+  margin-left: 0;
+  margin-right: auto;
+}
+.editor-js-container [data-ds-align="center"] .image-tool__image {
+  margin-left: auto;
+  margin-right: auto;
+}
+.editor-js-container [data-ds-align="right"] .image-tool__image {
+  margin-left: auto;
+  margin-right: 0;
+}

@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import slugify from "slugify";
-import { TiptapEditor } from "./TiptapEditor";
+import { BlogEditor } from "./editorjs";
 import { CategorySelect } from "@/components/editor/CategorySelect";
 import { FeaturedImageUpload } from "@/components/editor/FeaturedImageUpload";
 import { SeoData } from "@/components/seo/SeoSidebar";
@@ -34,6 +34,24 @@ const DEFAULT_SEO: SeoData = {
 };
 
 import { useSession } from "next-auth/react";
+
+/**
+ * Constrains a hand-typed slug to what a URL should contain: lowercase
+ * letters, digits and hyphens. URLs are matched case-insensitively on the
+ * website, so an uppercase slug would only create duplicate-looking links.
+ *
+ * Trailing hyphens are preserved while typing (so "my-post-" can become
+ * "my-post-title") and trimmed on blur.
+ */
+function sanitizeSlug(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "") // strip diacritics: "café" -> "cafe"
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-{2,}/g, "-");
+}
 
 interface PostEditorProps {
   initialPost?: Record<string, unknown>;
@@ -384,9 +402,13 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
                 type="text"
                 value={slug}
                 onChange={(e) => {
-                  setSlug(e.target.value);
+                  setSlug(sanitizeSlug(e.target.value));
                   setIsSlugCustomized(true);
                 }}
+                onBlur={() => setSlug((s) => s.replace(/^-+|-+$/g, ""))}
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
                 placeholder="post-slug"
                 className="text-[#F15C20] bg-transparent border-none outline-none font-mono text-sm flex-1 min-w-0 border-b border-transparent hover:border-gray-300 focus:border-[#F15C20] transition-colors pb-0.5"
               />
@@ -396,7 +418,7 @@ export function PostEditor({ initialPost, postId }: PostEditorProps) {
           {/* Editor card — fills remaining height, toolbar inside always visible */}
           <div className="flex-1 min-h-0 px-6 pb-5 pt-3 overflow-hidden">
             <div className="h-full bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-              <TiptapEditor content={content} contentHtml={contentHtml} onChange={handleContentChange} />
+              <BlogEditor content={content} contentHtml={contentHtml} onChange={handleContentChange} />
             </div>
           </div>
         </div>
