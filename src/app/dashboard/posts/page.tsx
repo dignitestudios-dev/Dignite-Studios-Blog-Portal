@@ -94,7 +94,10 @@ export default function PostsPage() {
     setCloningId(null);
   }
 
-  const filters = ["all", "published", "draft", "scheduled"];
+  // "scheduled" is intentionally absent: the editor can no longer set it, so the
+  // tab would always be empty. STATUS_COLORS still maps it, because the schema
+  // permits the value and a legacy post must still render its badge.
+  const filters = ["all", "published", "draft"];
 
   return (
     <div className="p-8">
