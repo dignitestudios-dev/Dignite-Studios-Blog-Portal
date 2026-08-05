@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { GoDotFill } from "react-icons/go";
 import { FiArrowLeft, FiExternalLink } from "react-icons/fi";
+import { BLOG_CONTENT_CSS, wrapTables } from "./blogContentCss";
 
 interface Author {
   name?: string;
@@ -252,7 +253,10 @@ export function WebsiteBlogPreview({ post, related = [] }: WebsiteBlogPreviewPro
   const rawContent = post.contentHtml || "<p>No content written yet.</p>";
   const heroImage = post.featuredImage?.url;
   const headings = useMemo(() => extractHeadings(rawContent), [rawContent]);
-  const processedContent = useMemo(() => injectHeadingIds(rawContent), [rawContent]);
+  const processedContent = useMemo(
+    () => wrapTables(injectHeadingIds(rawContent)),
+    [rawContent]
+  );
   const readMin = post.readTime || readingTime(rawContent);
   const categories = post.categories || [];
   const dateStr = formatDate(post.publishedAt || post.createdAt);
@@ -288,32 +292,7 @@ export function WebsiteBlogPreview({ post, related = [] }: WebsiteBlogPreviewPro
 
   return (
     <>
-      <style>{`
-        .blog-content { color: #1a1a1a; max-width: 761px; }
-        .blog-content h2 { font-size: 1.6875rem; font-weight: 700; margin: 2rem 0 1rem; line-height: 2.0625rem; color: #1F222E; scroll-margin-top: 130px; }
-        .blog-content h3 { font-size: 1.125rem; font-weight: 700; margin: 1.5rem 0 0.75rem; line-height: 1.75rem; color: #222; }
-        .blog-content ul { list-style-type: disc; margin: 1rem 0 1rem 1.5rem; padding-left: 1rem; }
-        .blog-content ol { list-style-type: decimal; margin: 1rem 0 1rem 1.5rem; padding-left: 1rem; }
-        .blog-content li { margin-bottom: 0.5rem; font-size: 18px; color: #1F222E; line-height: 150%; }
-        .blog-content p {
-          margin: 0 0 1rem 0;
-          width: 100%;
-          max-width: 761px;
-          height: auto;
-          font-style: normal;
-          font-weight: 400;
-          font-size: 18px;
-          line-height: 150%;
-          color: #1F222E;
-        }
-        .blog-content a { color: #f97316; text-decoration: underline; }
-        .blog-content img { max-width: 100%; border-radius: 12px; margin: 1.5rem 0; }
-        .blog-content blockquote { border-left: 4px solid #f97316; padding-left: 1rem; margin: 1.5rem 0; font-style: italic; color: #555; }
-        .blog-content pre { background: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
-        .blog-content code { background: #f3f4f6; color: #ef4444; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
-        .blog-content pre code { background: none; color: inherit; padding: 0; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-      `}</style>
+      <style>{BLOG_CONTENT_CSS}</style>
 
       <div className="min-h-screen bg-[#fafafa] font-sans text-gray-900 selection:bg-[#F15C20] selection:text-white flex flex-col">
         {/* ── Admin Top Control Bar ────────────────────────────────────────── */}
@@ -358,21 +337,23 @@ export function WebsiteBlogPreview({ post, related = [] }: WebsiteBlogPreviewPro
         </div>
 
         {/* ── Main Content Matching DS-Website Exact Layout ───────────────── */}
-        <main className="min-h-screen bg-[#fafafa] pb-24 max-w-[1200px] w-full mx-auto flex-1">
+        {/* Widths, padding and grid below mirror DS-website's BlogPostPage so the
+            content column measures the same 761px it will on the live page. */}
+        <main className="min-h-screen bg-[#fafafa] pb-24 w-[1200px] mx-auto flex-1">
           {/* Breadcrumb */}
           <div className="bg-white">
-            <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
+            <div className="max-w-7xl mx-auto pr-4 pt-4 pb-2">
               <Breadcrumb title={post.title || "Untitled Post"} />
             </div>
           </div>
 
-          <div className="bg-white pb-10 relative px-4">
-            <div className="max-w-7xl mx-auto pt-4">
+          <div className="bg-white pb-10 relative">
+            <div className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-[761px_1fr] gap-10 items-start justify-center">
                 {/* Main Content Column */}
                 <div className="w-full lg:max-w-[761px]">
                   {heroImage ? (
-                    <div className="pt-2">
+                    <div className="fade-up pt-2">
                       <h1 className="text-xl md:text-3xl font-extrabold text-gray-900 leading-tight mb-6">
                         {post.title || "Untitled Post"}
                       </h1>
@@ -425,7 +406,7 @@ export function WebsiteBlogPreview({ post, related = [] }: WebsiteBlogPreviewPro
 
                   <article className="w-full lg:max-w-[761px] mt-8">
                     <div
-                      className="blog-content bg-white pb-6 rounded-3xl"
+                      className="blog-content bg-white pb-6 rounded-3xl fade-up"
                       dangerouslySetInnerHTML={{ __html: processedContent }}
                     />
 
