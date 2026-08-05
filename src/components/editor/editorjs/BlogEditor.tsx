@@ -20,7 +20,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type EditorJS from "@editorjs/editorjs";
 import type { OutputBlockData, OutputData } from "@editorjs/editorjs";
-import type Undo from "editorjs-undo";
 import {
   FiCode,
   FiCornerUpLeft,
@@ -28,9 +27,12 @@ import {
   FiEdit3,
   FiCheck,
   FiX,
+  FiMaximize2,
+  FiMinimize2,
 } from "react-icons/fi";
 import { blocksToHtml } from "./blocksToHtml";
 import { htmlToBlocks } from "./htmlToBlocks";
+import { EditorHistory, type HistoryState } from "./history";
 
 interface BlogEditorProps {
   /** Stored Editor.js document. Ignored when it is not in Editor.js shape. */
@@ -74,9 +76,10 @@ export default function BlogEditor({
   onChange,
   placeholder = "Start writing, or press Tab to add a block…",
 }: BlogEditorProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const holderRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorJS | null>(null);
-  const undoRef = useRef<Undo | null>(null);
+  const historyRef = useRef<EditorHistory | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const htmlTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -88,8 +91,22 @@ export default function BlogEditor({
   const [mode, setMode] = useState<"rich" | "html">("rich");
   const [htmlDraft, setHtmlDraft] = useState("");
   const [htmlError, setHtmlError] = useState<string | null>(null);
-  const [history, setHistory] = useState({ canUndo: false, canRedo: false });
+  const [history, setHistory] = useState<HistoryState>({
+    canUndo: false,
+    canRedo: false,
+  });
   const [words, setWords] = useState(() => countWords(contentHtml ?? ""));
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Exit fullscreen with Escape
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isFullscreen]);
 
   // Snapshot the initial document once — later prop changes must not clobber
   // what the user is typing.
@@ -99,22 +116,18 @@ export default function BlogEditor({
     []
   );
 
-  const refreshHistory = useCallback(() => {
-    const undo = undoRef.current;
-    if (!undo) return;
-    setHistory({
-      canUndo: undo.canUndo?.() ?? false,
-      canRedo: undo.canRedo?.() ?? false,
-    });
-  }, []);
-
-  /** Serializes the current document and pushes it up to the post form. */
-  const emit = useCallback(async () => {
+  /**
+   * Serializes the document once, then feeds both consumers from that single
+   * save: the history stack and the post form. Saving twice risked the two
+   * seeing different states when changes landed in between.
+   */
+  const sync = useCallback(async ({ record = true } = {}) => {
     const editor = editorRef.current;
     if (!editor) return;
 
     try {
       const output = await editor.save();
+      if (record) historyRef.current?.record(output.blocks);
       const html = blocksToHtml(output);
       setWords(countWords(html));
       onChangeRef.current(output, html);
@@ -141,7 +154,6 @@ export default function BlogEditor({
         { default: Embed },
         { default: Marker },
         { default: InlineCode },
-        { default: UndoTool },
         { default: LinkTool },
         { default: CtaTool },
         { default: AlignmentTune },
@@ -158,7 +170,6 @@ export default function BlogEditor({
         import("@editorjs/embed"),
         import("@editorjs/marker"),
         import("@editorjs/inline-code"),
-        import("editorjs-undo"),
         import("./LinkTool"),
         import("./CtaTool"),
         import("./AlignmentTune"),
@@ -264,20 +275,16 @@ export default function BlogEditor({
         },
         onChange: () => {
           if (saveTimer.current) clearTimeout(saveTimer.current);
-          saveTimer.current = setTimeout(() => {
-            void emit();
-            refreshHistory();
-          }, SAVE_DEBOUNCE_MS);
+          saveTimer.current = setTimeout(() => void sync(), SAVE_DEBOUNCE_MS);
         },
         onReady: () => {
-          if (disposed || !instance) return;
-          undoRef.current = new UndoTool({
+          if (disposed || !instance || !holderRef.current) return;
+          historyRef.current = new EditorHistory({
             editor: instance,
-            onUpdate: refreshHistory,
-            config: { debounceTimer: 200 },
+            holder: holderRef.current,
+            onUpdate: setHistory,
           });
-          undoRef.current.initialize(initialData);
-          refreshHistory();
+          historyRef.current.seed(initialData.blocks);
         },
       });
 
@@ -308,21 +315,98 @@ export default function BlogEditor({
       // Editor.js did not get to run the tool's own destroy hook.
       document.querySelectorAll(".ds-link-panel").forEach((el) => el.remove());
       editorRef.current = null;
-      undoRef.current = null;
+      historyRef.current?.destroy();
+      historyRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Toolbar actions ───────────────────────────────────────────────────────
-  const handleUndo = useCallback(() => {
-    undoRef.current?.undo();
-    refreshHistory();
-  }, [refreshHistory]);
 
-  const handleRedo = useCallback(() => {
-    undoRef.current?.redo();
-    refreshHistory();
-  }, [refreshHistory]);
+  /**
+   * Commits any change still sitting in the save debounce. Without this the
+   * most recent keystrokes are not in the stack yet, so the first undo would
+   * skip past them.
+   */
+  const flushPendingChange = useCallback(async () => {
+    if (!saveTimer.current) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    await sync();
+  }, [sync]);
+
+  const handleUndo = useCallback(async () => {
+    await flushPendingChange();
+    await historyRef.current?.undo();
+    await sync({ record: false });
+  }, [flushPendingChange, sync]);
+
+  const handleRedo = useCallback(async () => {
+    await flushPendingChange();
+    await historyRef.current?.redo();
+    await sync({ record: false });
+  }, [flushPendingChange, sync]);
+
+  // Kept in refs so the key handler below can stay bound for the component's
+  // whole life instead of rebinding whenever history state changes.
+  const undoRedoRef = useRef({ undo: handleUndo, redo: handleRedo });
+  undoRedoRef.current = { undo: handleUndo, redo: handleRedo };
+
+  /**
+   * Ctrl/Cmd+Z and Ctrl+Y / Ctrl+Shift+Z.
+   *
+   * Bound in the capture phase because tools with their own key handling (the
+   * CTA fields, the table) stop propagation on keydown, which would otherwise
+   * swallow the shortcut.
+   *
+   * `beforeinput` matters just as much as `keydown`: the browser's native
+   * contenteditable undo also fires from the Edit menu and trackpad gestures,
+   * and letting it run would rewrite the DOM without Editor.js knowing, leaving
+   * the block model out of sync with what is on screen.
+   */
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const isTextField = (target: EventTarget | null) =>
+      target instanceof HTMLElement &&
+      (target.tagName === "TEXTAREA" ||
+        target.tagName === "INPUT" ||
+        target.closest(".ds-link-panel") !== null);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      // The HTML textarea and the link panel keep their native undo.
+      if (isTextField(event.target)) return;
+
+      const key = event.key.toLowerCase();
+      const isUndo = key === "z" && !event.shiftKey;
+      const isRedo = key === "y" || (key === "z" && event.shiftKey);
+      if (!isUndo && !isRedo) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      void (isUndo ? undoRedoRef.current.undo() : undoRedoRef.current.redo());
+    };
+
+    const onBeforeInput = (event: Event) => {
+      const inputType = (event as InputEvent).inputType;
+      if (inputType !== "historyUndo" && inputType !== "historyRedo") return;
+      if (isTextField(event.target)) return;
+
+      event.preventDefault();
+      void (inputType === "historyUndo"
+        ? undoRedoRef.current.undo()
+        : undoRedoRef.current.redo());
+    };
+
+    root.addEventListener("keydown", onKeyDown, true);
+    root.addEventListener("beforeinput", onBeforeInput, true);
+    return () => {
+      root.removeEventListener("keydown", onKeyDown, true);
+      root.removeEventListener("beforeinput", onBeforeInput, true);
+    };
+  }, []);
 
   /** rich -> html: serialize what is currently in the editor. */
   const openHtmlView = useCallback(async () => {
@@ -344,21 +428,23 @@ export default function BlogEditor({
       await editor.render({ blocks });
       setMode("rich");
       setHtmlError(null);
-      void emit();
-      refreshHistory();
+      // Hand-edited HTML replaces the document wholesale, so the old stack no
+      // longer describes anything reachable — start a fresh one from here.
+      historyRef.current?.reset(blocks);
+      await sync({ record: false });
     } catch (error) {
       console.error("Failed to apply HTML:", error);
       setHtmlError(
         "That HTML could not be parsed. Check for unclosed tags and try again."
       );
     }
-  }, [htmlDraft, emit, refreshHistory]);
+  }, [htmlDraft, sync]);
 
   const discardHtml = useCallback(() => {
     setMode("rich");
     setHtmlError(null);
-    void emit();
-  }, [emit]);
+    void sync({ record: false });
+  }, [sync]);
 
   /**
    * Keeps the post form in sync while the HTML view is open, so word count,
@@ -378,7 +464,14 @@ export default function BlogEditor({
   const isHtmlMode = mode === "html";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <div
+      ref={rootRef}
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-[100] flex h-screen min-h-0 flex-col overflow-hidden bg-white"
+          : "flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white"
+      }
+    >
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
       <div className="z-20 flex flex-shrink-0 items-center gap-1 border-b border-gray-100 bg-gray-50/80 px-2 py-1.5">
         <ToolbarButton
@@ -391,7 +484,7 @@ export default function BlogEditor({
         <ToolbarButton
           onClick={handleRedo}
           disabled={isHtmlMode || !history.canRedo}
-          title="Redo (Ctrl+Y)"
+          title="Redo (Ctrl+Shift+Z / Ctrl+Y)"
         >
           <FiCornerUpRight size={15} />
         </ToolbarButton>
@@ -427,6 +520,13 @@ export default function BlogEditor({
             </span>
           )}
           <span>{words.toLocaleString()} words</span>
+          <span className="mx-0.5 h-4 w-px bg-gray-200" />
+          <ToolbarButton
+            onClick={() => setIsFullscreen((v) => !v)}
+            title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
+          >
+            {isFullscreen ? <FiMinimize2 size={15} /> : <FiMaximize2 size={15} />}
+          </ToolbarButton>
         </div>
       </div>
 

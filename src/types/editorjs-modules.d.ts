@@ -27,29 +27,3 @@ declare module "@editorjs/embed" {
   }
 }
 
-declare module "editorjs-undo" {
-  import type EditorJS from "@editorjs/editorjs";
-  import type { OutputData } from "@editorjs/editorjs";
-
-  interface UndoOptions {
-    editor: EditorJS;
-    maxLength?: number;
-    onUpdate?: () => void;
-    config?: {
-      debounceTimer?: number;
-      shortcuts?: { undo?: string | string[]; redo?: string | string[] };
-    };
-  }
-
-  export default class Undo {
-    constructor(options: UndoOptions);
-    /** Seeds the history stack with the document the editor opened with. */
-    initialize(initialData?: OutputData | OutputData["blocks"]): void;
-    undo(): void;
-    redo(): void;
-    canUndo(): boolean;
-    canRedo(): boolean;
-    /** Clears the recorded history. */
-    clear?(): void;
-  }
-}
