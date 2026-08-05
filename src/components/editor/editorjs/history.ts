@@ -279,14 +279,12 @@ export class EditorHistory {
 
   async undo(): Promise<void> {
     if (!this.canUndo()) return;
-    this.position -= 1;
-    await this.apply(this.stack[this.position]);
+    await this.moveTo(this.position - 1);
   }
 
   async redo(): Promise<void> {
     if (!this.canRedo()) return;
-    this.position += 1;
-    await this.apply(this.stack[this.position]);
+    await this.moveTo(this.position + 1);
   }
 
   /**
@@ -308,8 +306,19 @@ export class EditorHistory {
     this.onUpdate({ canUndo: this.canUndo(), canRedo: this.canRedo() });
   }
 
-  /** Makes the document equal to `snapshot`. */
-  private async apply(snapshot: Snapshot): Promise<void> {
+  /**
+   * Moves to `target`, making the document equal to the snapshot stored there.
+   *
+   * The position is only kept if the restore actually lands. Moving it up front
+   * and leaving it moved after a failure would have the stack describing a
+   * document the editor never showed, so every later undo would work off the
+   * wrong baseline.
+   */
+  private async moveTo(target: number): Promise<void> {
+    const previous = this.position;
+    const snapshot = this.stack[target];
+
+    this.position = target;
     this.applying = true;
     // Report the new button state immediately; the render below is async.
     this.emitState();
@@ -326,15 +335,24 @@ export class EditorHistory {
         await this.editor.blocks.render({ blocks: cloneBlocks(snapshot.blocks) });
       }
 
+      // Store what the editor actually ended up with rather than what we asked
+      // for. Editor.js may normalize on render, and the change event this
+      // restore triggers has to compare equal to be collapsed — otherwise the
+      // restored state is recorded as a fresh edit and the redo branch dies.
+      const applied = (await this.editor.save()).blocks;
+      this.stack[target] = { ...snapshot, blocks: cloneBlocks(applied) };
+
       this.restoreCaret(snapshot.caret);
     } catch (error) {
       console.error("Editor history: failed to restore state", error);
+      this.position = previous;
     } finally {
-      // Editor.js dispatches its mutation events asynchronously, so the guard
-      // has to outlive the await above by a frame.
-      requestAnimationFrame(() => {
-        this.applying = false;
-      });
+      // Released synchronously. The echo from this restore is recognized by
+      // value in `record` (it compares equal and is collapsed), so holding the
+      // guard past this point would only risk discarding a real edit that
+      // happens to land in the same frame.
+      this.applying = false;
+      this.emitState();
     }
   }
 
