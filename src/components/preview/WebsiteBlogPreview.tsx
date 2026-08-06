@@ -294,7 +294,11 @@ export function WebsiteBlogPreview({ post, related = [] }: WebsiteBlogPreviewPro
     <>
       <style>{BLOG_CONTENT_CSS}</style>
 
-      <div className="min-h-screen bg-[#fafafa] font-sans text-gray-900 selection:bg-[#F15C20] selection:text-white flex flex-col">
+      {/* White rather than the site's #fafafa. NOTE: this is a deliberate
+          divergence from DS-website/BlogPostPage, which still paints its
+          <main> #fafafa — if that page is ever changed to white, the two are
+          back in sync and this comment can go. */}
+      <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-[#F15C20] selection:text-white flex flex-col">
         {/* ── Admin Top Control Bar ────────────────────────────────────────── */}
         <div className="sticky top-0 z-50 bg-gray-900 text-white px-4 py-2.5 flex items-center justify-between border-b border-gray-800 shadow-md text-xs sm:text-sm shrink-0">
           <div className="flex items-center gap-3">
@@ -339,7 +343,7 @@ export function WebsiteBlogPreview({ post, related = [] }: WebsiteBlogPreviewPro
         {/* ── Main Content Matching DS-Website Exact Layout ───────────────── */}
         {/* Widths, padding and grid below mirror DS-website's BlogPostPage so the
             content column measures the same 761px it will on the live page. */}
-        <main className="min-h-screen bg-[#fafafa] pb-24 w-[1200px] mx-auto flex-1">
+        <main className="min-h-screen bg-white pb-24 w-[1200px] mx-auto flex-1">
           {/* Breadcrumb */}
           <div className="bg-white">
             <div className="max-w-7xl mx-auto pr-4 pt-4 pb-2">
