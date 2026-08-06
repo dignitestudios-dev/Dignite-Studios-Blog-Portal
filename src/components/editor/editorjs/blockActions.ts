@@ -34,6 +34,8 @@ export interface BlockState {
   kind: BlockKind | "";
   listStyle: ListStyle | "";
   alignment: Alignment;
+  /** Percentage width of the current image block, 0 when it is not an image. */
+  imageWidth: number;
   /** False when there is no current block, so controls can be disabled. */
   available: boolean;
 }
@@ -43,6 +45,7 @@ export const EMPTY_BLOCK_STATE: BlockState = {
   kind: "",
   listStyle: "",
   alignment: "left",
+  imageWidth: 0,
   available: false,
 };
 
@@ -195,9 +198,22 @@ export class BlockActions {
   private currentElement(): HTMLElement | null {
     const selection = window.getSelection();
     const node = selection?.anchorNode;
-    if (!node || !this.holder.contains(node)) return null;
-    const start = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    return start?.closest<HTMLElement>(".ce-block") ?? null;
+    if (node && this.holder.contains(node)) {
+      const start = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+      const block = start?.closest<HTMLElement>(".ce-block");
+      if (block) return block;
+    }
+
+    // Image, embed and divider blocks hold no caret, so there is no selection
+    // to walk up from — but clicking one still focuses it, and Editor.js marks
+    // it selected. Without these fallbacks the toolbar could never act on them.
+    const active = document.activeElement;
+    if (active && active !== document.body && this.holder.contains(active)) {
+      const block = active.closest<HTMLElement>(".ce-block");
+      if (block) return block;
+    }
+
+    return this.holder.querySelector<HTMLElement>(".ce-block--selected");
   }
 
   /** Index of the caret's block, or -1. */
@@ -278,7 +294,25 @@ export class BlockActions {
     const aligned = element?.querySelector<HTMLElement>("[data-ds-align]");
     const alignment = (aligned?.dataset.dsAlign as Alignment | undefined) ?? "left";
 
-    return { tool, kind, listStyle, alignment, available: true };
+    const sized = element?.querySelector<HTMLElement>("[data-ds-width]");
+    const imageWidth = tool === "image" ? Number(sized?.dataset.dsWidth ?? 100) || 100 : 0;
+
+    return { tool, kind, listStyle, alignment, imageWidth, available: true };
+  }
+
+  /** Sets the width tune on the current image block. */
+  async setImageWidth(width: number): Promise<boolean> {
+    const block = this.currentBlock();
+    if (!block || block.name !== "image") return false;
+    try {
+      await this.editor.blocks.update(block.id, undefined, {
+        imageWidth: { width },
+      });
+      return true;
+    } catch (error) {
+      console.error("Cannot set image width:", error);
+      return false;
+    }
   }
 
   /** Converts the current block to another type. */

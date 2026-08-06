@@ -71,6 +71,7 @@ import {
 } from "./blockActions";
 import { EmbedDialog } from "./EmbedDialog";
 import type { Alignment } from "./AlignmentTune";
+import { IMAGE_WIDTHS } from "./ImageWidthTune";
 import { validateHtml, formatHtml } from "./htmlFormat";
 
 interface BlogEditorProps {
@@ -489,11 +490,24 @@ export default function BlogEditor({
       );
     };
 
+    // `selectionchange` alone is not enough. Image, embed and divider blocks
+    // hold no text, so clicking one moves no caret and fires no selection
+    // event — the toolbar kept describing whichever text block was last
+    // touched, which is why Delete and the alignment controls appeared dead on
+    // exactly those blocks. A click refresh covers them. It is deferred a tick
+    // because Editor.js sets its own current block in its click handler.
+    const refreshSoon = () => setTimeout(refresh, 0);
+    const holder = holderRef.current;
+
     document.addEventListener("selectionchange", refresh);
+    holder?.addEventListener("click", refreshSoon);
+    holder?.addEventListener("focusin", refreshSoon);
     refresh();
 
     return () => {
       document.removeEventListener("selectionchange", refresh);
+      holder?.removeEventListener("click", refreshSoon);
+      holder?.removeEventListener("focusin", refreshSoon);
     };
   }, [ready, mode]);
 
@@ -853,6 +867,24 @@ export default function BlogEditor({
             <Icon size={17} />
           </ToolbarButton>
         ))}
+
+        {/* Image size — only meaningful on an image, so it appears with one. */}
+        {blockState.tool === "image" && (
+          <>
+            <span className="mx-1 h-5 w-px bg-gray-200" />
+            <span className="px-1 text-[11px] font-medium text-gray-400">Size</span>
+            {IMAGE_WIDTHS.map((width) => (
+              <ToolbarButton
+                key={width}
+                onClick={() => void runBlockAction((a) => a.setImageWidth(width))}
+                active={blockState.imageWidth === width}
+                title={`${width}% width`}
+              >
+                <span className="text-[11px] font-semibold">{width}%</span>
+              </ToolbarButton>
+            ))}
+          </>
+        )}
 
         <span className="mx-1 h-5 w-px bg-gray-200" />
 

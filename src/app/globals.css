@@ -274,6 +274,33 @@ body {
   display: none !important;
 }
 
+/* ─── Divider ────────────────────────────────────────────────────────────────
+   @editorjs/delimiter draws three asterisks. The published page renders <hr>,
+   so the editor was showing something the reader never sees — replace the
+   glyphs with the same light rule the article uses.
+   ─────────────────────────────────────────────────────────────────────────── */
+.editor-js-container .ce-delimiter {
+  position: relative;
+  padding: 0;
+  margin: 2rem 0;
+  line-height: 0;
+  font-size: 0;
+}
+
+/* The asterisks are the element's ::before content in the tool's own CSS. */
+.editor-js-container .ce-delimiter::before {
+  content: "";
+  display: block;
+  /* The tool sizes its glyphs with height/line-height/letter-spacing — all of
+     it has to be reset, not just the content, or the rule keeps their box. */
+  height: 1px;
+  width: 100%;
+  line-height: 0;
+  letter-spacing: 0;
+  font-size: 0;
+  background: #e5e7eb;
+}
+
 /* Generous tail room so a block menu opened on the last block still has space
    to expand downward instead of being clipped by the scroll container. */
 .editor-js-container .codex-editor__redactor {
