@@ -72,6 +72,94 @@ function flattenItems(items: (ListItemData | string)[]): string[] {
   return lines;
 }
 
+/**
+ * Builds the block data @editorjs/embed expects from a share URL.
+ *
+ * The tool has no empty state: `render()` returns a bare div whenever
+ * `data.service` is unset, which is why inserting a data-less embed block
+ * appeared to do nothing. It normally fills itself in from a *pasted* URL, so
+ * the toolbar has to do the same job by hand.
+ *
+ * The `embed` templates below are copied from the tool's own service table, so
+ * a block made here is indistinguishable from one made by pasting.
+ */
+export interface EmbedData {
+  service: string;
+  source: string;
+  embed: string;
+  width: number;
+  height: number;
+  caption: string;
+}
+
+const EMBED_SERVICES: {
+  service: string;
+  regex: RegExp;
+  embed: (id: string) => string;
+  width: number;
+  height: number;
+}[] = [
+  {
+    service: "youtube",
+    // watch?v=, youtu.be/, /embed/, /shorts/ — all carry the id in one group.
+    regex:
+      /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{6,})/i,
+    embed: (id) => `https://www.youtube.com/embed/${id}`,
+    width: 580,
+    height: 320,
+  },
+  {
+    service: "vimeo",
+    regex: /vimeo\.com\/(?:video\/)?(\d+)/i,
+    embed: (id) => `https://player.vimeo.com/video/${id}?title=0&byline=0`,
+    width: 580,
+    height: 320,
+  },
+  {
+    service: "codepen",
+    regex: /codepen\.io\/([^/?#]+)\/(?:pen|embed)\/([^/?#]+)/i,
+    // The tool's template takes "<user>/embed/<slug>" as the remote id.
+    embed: (id) => `https://codepen.io/${id}?height=300&theme-id=0&default-tab=css,result`,
+    width: 600,
+    height: 300,
+  },
+  {
+    service: "twitter",
+    regex: /(?:twitter\.com|x\.com)\/[^/?#]+\/status\/(\d+)/i,
+    embed: (id) => `https://platform.twitter.com/embed/Tweet.html?id=${id}`,
+    width: 600,
+    height: 600,
+  },
+];
+
+export function embedFromUrl(rawUrl: string): EmbedData | null {
+  const source = rawUrl.trim();
+  if (!source) return null;
+
+  for (const entry of EMBED_SERVICES) {
+    const match = entry.regex.exec(source);
+    if (!match) continue;
+
+    // CodePen needs both captures joined into the id its template expects.
+    const id =
+      entry.service === "codepen" ? `${match[1]}/embed/${match[2]}` : match[1];
+
+    return {
+      service: entry.service,
+      source,
+      embed: entry.embed(id),
+      width: entry.width,
+      height: entry.height,
+      caption: "",
+    };
+  }
+
+  return null;
+}
+
+/** Services the toolbar can embed, for the prompt and error message. */
+export const EMBED_SERVICE_NAMES = "YouTube, Vimeo, CodePen or X/Twitter";
+
 /** Maps a toolbar choice onto the tool name plus the data it needs. */
 function conversionTarget(kind: BlockKind): { tool: string; data?: object } {
   if (kind === "paragraph") return { tool: "paragraph" };
@@ -300,13 +388,18 @@ export class BlockActions {
     }
   }
 
-  /** Inserts a new block after the current one. */
-  async insert(kind: InsertKind): Promise<boolean> {
+  /**
+   * Inserts a new block after the current one.
+   *
+   * `data` is only needed by the embed tool, which renders nothing at all
+   * without a recognised service.
+   */
+  async insert(kind: InsertKind, data?: object): Promise<boolean> {
     try {
       const index = this.currentIndex();
       this.editor.blocks.insert(
         kind,
-        undefined,
+        data,
         undefined,
         index < 0 ? undefined : index + 1,
         true

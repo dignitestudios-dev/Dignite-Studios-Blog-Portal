@@ -67,6 +67,8 @@ import {
   type BlockState,
   type ListStyle,
   type InsertKind,
+  embedFromUrl,
+  EMBED_SERVICE_NAMES,
 } from "./blockActions";
 import type { Alignment } from "./AlignmentTune";
 import { validateHtml, formatHtml } from "./htmlFormat";
@@ -202,6 +204,14 @@ export default function BlogEditor({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [format, setFormat] = useState<InlineFormatState>(EMPTY_FORMAT_STATE);
   const [blockState, setBlockState] = useState<BlockState>(EMPTY_BLOCK_STATE);
+  /** Transient toolbar message (e.g. an unrecognised embed link). */
+  const [toolbarNotice, setToolbarNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toolbarNotice) return;
+    const timer = setTimeout(() => setToolbarNotice(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toolbarNotice]);
 
   // Exit fullscreen with Escape
   useEffect(() => {
@@ -532,6 +542,34 @@ export default function BlogEditor({
     [mode, sync]
   );
 
+  /**
+   * Asks for the video / post URL, then inserts a fully-formed embed block.
+   *
+   * The embed tool builds itself from a pasted URL and renders nothing when it
+   * has no service, so an empty block would look like a dead button — which is
+   * exactly how this behaved before.
+   */
+  const insertEmbed = useCallback(() => {
+    if (mode === "html" || !blockActionsRef.current) return;
+
+    const url = window.prompt(`Paste a ${EMBED_SERVICE_NAMES} link:`);
+    if (url === null) return; // cancelled
+
+    const data = embedFromUrl(url);
+    if (!data) {
+      setHtmlError(null);
+      setToolbarNotice(
+        url.trim()
+          ? `That link is not a ${EMBED_SERVICE_NAMES} URL.`
+          : "Enter a link to embed."
+      );
+      return;
+    }
+
+    setToolbarNotice(null);
+    void runBlockAction((a) => a.insert("embed", data));
+  }, [mode, runBlockAction]);
+
   // ── Toolbar actions ───────────────────────────────────────────────────────
 
   /**
@@ -831,7 +869,9 @@ export default function BlogEditor({
         {INSERT_BUTTONS.map(({ kind, icon: Icon, title }) => (
           <ToolbarButton
             key={kind}
-            onClick={() => void runBlockAction((a) => a.insert(kind))}
+            onClick={() =>
+              kind === "embed" ? insertEmbed() : void runBlockAction((a) => a.insert(kind))
+            }
             disabled={isHtmlMode || !ready}
             title={title}
           >
@@ -880,6 +920,12 @@ export default function BlogEditor({
           </ToolbarButton>
         </div>
       </div>
+
+      {toolbarNotice && (
+        <p className="flex-shrink-0 border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-700">
+          {toolbarNotice}
+        </p>
+      )}
 
       {htmlError && (
         <p className="flex-shrink-0 border-b border-red-100 bg-red-50 px-4 py-2 text-xs text-red-600">
