@@ -546,7 +546,14 @@ export default function BlogEditor({
       if (!changed) return;
 
       void sync();
+
+      // A tune write makes Editor.js re-render the block, and the tune only
+      // stamps its `data-ds-*` attribute during that render. Reading state
+      // straight away therefore saw the *old* value — which is why a new image
+      // width did not light up until the post was saved and reloaded. Read
+      // once now for responsiveness and again after the re-render lands.
       setBlockState(actions.readState());
+      setTimeout(() => setBlockState(actions.readState()), 60);
     },
     [mode, sync]
   );

@@ -271,7 +271,11 @@ export class BlockActions {
     })();
     if (!block) return EMPTY_BLOCK_STATE;
 
-    const element = this.focusedElement();
+    // Addressed by index, not by focus: a tune write re-renders the block and
+    // can drop focus, and a null element here would silently report the
+    // defaults — reading an image's width back as 100% however it was set.
+    const element =
+      this.holder.querySelectorAll<HTMLElement>(".ce-block")[index] ?? this.focusedElement();
     const tool = block.name;
 
     let kind: BlockKind | "" = "";
@@ -305,7 +309,9 @@ export class BlockActions {
     const block = this.currentBlock();
     if (!block || block.name !== "image") return false;
     try {
+      const tunes = await this.readTunes(block);
       await this.editor.blocks.update(block.id, undefined, {
+        ...tunes,
         imageWidth: { width },
       });
       return true;
@@ -407,12 +413,31 @@ export class BlockActions {
     return true;
   }
 
-  /** Sets the alignment tune on the current block. */
+  /**
+   * The tunes currently saved on a block.
+   *
+   * `blocks.update` REPLACES the tunes object rather than merging it, so any
+   * tune left out is reset to its default. Setting the alignment was therefore
+   * wiping an image's width back to 100%, and setting the width was wiping the
+   * alignment. Every tune write has to carry the others along.
+   */
+  private async readTunes(block: BlockAPI): Promise<Record<string, unknown>> {
+    try {
+      const saved = await block.save();
+      return ((saved as { tunes?: Record<string, unknown> } | undefined)?.tunes) ?? {};
+    } catch {
+      return {};
+    }
+  }
+
+  /** Sets the alignment tune on the current block, preserving its other tunes. */
   async setAlignment(alignment: Alignment): Promise<boolean> {
     const block = this.currentBlock();
     if (!block) return false;
     try {
+      const tunes = await this.readTunes(block);
       await this.editor.blocks.update(block.id, undefined, {
+        ...tunes,
         alignment: { alignment },
       });
       return true;
