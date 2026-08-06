@@ -394,9 +394,12 @@ export class BlockActions {
    * `data` is only needed by the embed tool, which renders nothing at all
    * without a recognised service.
    */
-  async insert(kind: InsertKind, data?: object): Promise<boolean> {
+  async insert(kind: InsertKind, data?: object, atIndex?: number): Promise<boolean> {
     try {
-      const index = this.currentIndex();
+      // `atIndex` matters when a dialog supplied the data: opening it moved
+      // focus out of the editor, so the selection no longer says where the
+      // caret was. The caller captures the index before opening.
+      const index = atIndex ?? this.currentIndex();
       this.editor.blocks.insert(
         kind,
         data,
@@ -409,6 +412,14 @@ export class BlockActions {
       console.error(`Cannot insert "${kind}" block:`, error);
       return false;
     }
+  }
+
+  /**
+   * Where the caret is right now, for callers that are about to open a dialog
+   * and will lose the selection the moment they do.
+   */
+  captureIndex(): number {
+    return this.currentIndex();
   }
 
   /** Moves the current block one position up or down. */

@@ -67,9 +67,9 @@ import {
   type BlockState,
   type ListStyle,
   type InsertKind,
-  embedFromUrl,
-  EMBED_SERVICE_NAMES,
+  type EmbedData,
 } from "./blockActions";
+import { EmbedDialog } from "./EmbedDialog";
 import type { Alignment } from "./AlignmentTune";
 import { validateHtml, formatHtml } from "./htmlFormat";
 
@@ -204,14 +204,9 @@ export default function BlogEditor({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [format, setFormat] = useState<InlineFormatState>(EMPTY_FORMAT_STATE);
   const [blockState, setBlockState] = useState<BlockState>(EMPTY_BLOCK_STATE);
-  /** Transient toolbar message (e.g. an unrecognised embed link). */
-  const [toolbarNotice, setToolbarNotice] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!toolbarNotice) return;
-    const timer = setTimeout(() => setToolbarNotice(null), 4000);
-    return () => clearTimeout(timer);
-  }, [toolbarNotice]);
+  const [embedOpen, setEmbedOpen] = useState(false);
+  /** Block index the embed will land after, captured before the dialog opens. */
+  const embedIndexRef = useRef<number | null>(null);
 
   // Exit fullscreen with Escape
   useEffect(() => {
@@ -549,26 +544,22 @@ export default function BlogEditor({
    * has no service, so an empty block would look like a dead button — which is
    * exactly how this behaved before.
    */
-  const insertEmbed = useCallback(() => {
+  const openEmbedDialog = useCallback(() => {
     if (mode === "html" || !blockActionsRef.current) return;
+    // Captured now: opening the dialog moves focus off the editor, and the
+    // caret's block is worked out from the selection.
+    embedIndexRef.current = blockActionsRef.current.captureIndex();
+    setEmbedOpen(true);
+  }, [mode]);
 
-    const url = window.prompt(`Paste a ${EMBED_SERVICE_NAMES} link:`);
-    if (url === null) return; // cancelled
-
-    const data = embedFromUrl(url);
-    if (!data) {
-      setHtmlError(null);
-      setToolbarNotice(
-        url.trim()
-          ? `That link is not a ${EMBED_SERVICE_NAMES} URL.`
-          : "Enter a link to embed."
-      );
-      return;
-    }
-
-    setToolbarNotice(null);
-    void runBlockAction((a) => a.insert("embed", data));
-  }, [mode, runBlockAction]);
+  const insertEmbed = useCallback(
+    (data: EmbedData) => {
+      const index = embedIndexRef.current;
+      embedIndexRef.current = null;
+      void runBlockAction((a) => a.insert("embed", data, index ?? undefined));
+    },
+    [runBlockAction]
+  );
 
   // ── Toolbar actions ───────────────────────────────────────────────────────
 
@@ -870,7 +861,9 @@ export default function BlogEditor({
           <ToolbarButton
             key={kind}
             onClick={() =>
-              kind === "embed" ? insertEmbed() : void runBlockAction((a) => a.insert(kind))
+              kind === "embed"
+                ? openEmbedDialog()
+                : void runBlockAction((a) => a.insert(kind))
             }
             disabled={isHtmlMode || !ready}
             title={title}
@@ -921,11 +914,7 @@ export default function BlogEditor({
         </div>
       </div>
 
-      {toolbarNotice && (
-        <p className="flex-shrink-0 border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-700">
-          {toolbarNotice}
-        </p>
-      )}
+      <EmbedDialog open={embedOpen} onOpenChange={setEmbedOpen} onInsert={insertEmbed} />
 
       {htmlError && (
         <p className="flex-shrink-0 border-b border-red-100 bg-red-50 px-4 py-2 text-xs text-red-600">
