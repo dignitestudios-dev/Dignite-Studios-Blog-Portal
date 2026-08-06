@@ -252,6 +252,18 @@ body {
    image tunes) — doing so is what caused the double-bullet issues previously.
    ───────────────────────────────────────────────────────────────────────────── */
 
+/* ─── Inline formatting lives in the top toolbar ─────────────────────────────
+   The floating selection menu is hidden rather than unregistered. Dropping the
+   tools from the `inlineToolbar` config would also drop their `sanitize` rules,
+   and Editor.js's sanitizer would then strip <mark>, <code> and <a> from every
+   block on save. Hiding keeps the tools — and their Ctrl+B / Ctrl+I / Ctrl+K
+   shortcuts — fully alive while the buttons move to BlogEditor's toolbar.
+   The link tool's own panel is attached to <body>, so it is unaffected.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ce-inline-toolbar {
+  display: none !important;
+}
+
 /* Generous tail room so a block menu opened on the last block still has space
    to expand downward instead of being clipped by the scroll container. */
 .editor-js-container .codex-editor__redactor {

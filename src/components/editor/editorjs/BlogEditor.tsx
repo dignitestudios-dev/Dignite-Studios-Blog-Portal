@@ -30,9 +30,22 @@ import {
   FiMaximize2,
   FiMinimize2,
 } from "react-icons/fi";
+import {
+  MdFormatBold,
+  MdFormatItalic,
+  MdLink,
+  MdBorderColor,
+  MdCode,
+} from "react-icons/md";
 import { blocksToHtml } from "./blocksToHtml";
 import { htmlToBlocks } from "./htmlToBlocks";
 import { EditorHistory, type HistoryState } from "./history";
+import {
+  InlineFormatter,
+  EMPTY_FORMAT_STATE,
+  type InlineFormatName,
+  type InlineFormatState,
+} from "./inlineFormat";
 
 interface BlogEditorProps {
   /** Stored Editor.js document. Ignored when it is not in Editor.js shape. */
@@ -42,6 +55,19 @@ interface BlogEditorProps {
   onChange: (json: object, html: string) => void;
   placeholder?: string;
 }
+
+/** Order matches the old floating menu, so the muscle memory carries over. */
+const FORMAT_BUTTONS: {
+  name: InlineFormatName;
+  icon: React.ComponentType<{ size?: number }>;
+  title: string;
+}[] = [
+  { name: "bold", icon: MdFormatBold, title: "Bold (Ctrl+B)" },
+  { name: "italic", icon: MdFormatItalic, title: "Italic (Ctrl+I)" },
+  { name: "link", icon: MdLink, title: "Link (Ctrl+K)" },
+  { name: "marker", icon: MdBorderColor, title: "Highlight" },
+  { name: "inlineCode", icon: MdCode, title: "Inline code" },
+];
 
 const SAVE_DEBOUNCE_MS = 300;
 const HTML_DEBOUNCE_MS = 400;
@@ -80,6 +106,7 @@ export default function BlogEditor({
   const holderRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorJS | null>(null);
   const historyRef = useRef<EditorHistory | null>(null);
+  const formatterRef = useRef<InlineFormatter | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const htmlTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -97,6 +124,7 @@ export default function BlogEditor({
   });
   const [words, setWords] = useState(() => countWords(contentHtml ?? ""));
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [format, setFormat] = useState<InlineFormatState>(EMPTY_FORMAT_STATE);
 
   // Exit fullscreen with Escape
   useEffect(() => {
@@ -285,6 +313,18 @@ export default function BlogEditor({
             onUpdate: setHistory,
           });
           historyRef.current.seed(initialData.blocks);
+
+          // Reuses the very tool classes registered above, so the markup the
+          // top toolbar writes matches what the floating menu used to write.
+          formatterRef.current = new InlineFormatter({
+            editor: instance,
+            holder: holderRef.current,
+            tools: {
+              Marker: Marker as never,
+              InlineCode: InlineCode as never,
+              LinkTool: LinkTool as never,
+            },
+          });
         },
       });
 
@@ -317,9 +357,69 @@ export default function BlogEditor({
       editorRef.current = null;
       historyRef.current?.destroy();
       historyRef.current = null;
+      formatterRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Mirrors the caret's formatting onto the toolbar.
+   *
+   * `selectionchange` fires for every arrow key and every character typed, so
+   * the read is coalesced into one animation frame. In HTML mode the toolbar is
+   * disabled outright, and re-reading would only fight with the textarea.
+   */
+  useEffect(() => {
+    if (!ready || mode === "html") {
+      setFormat(EMPTY_FORMAT_STATE);
+      return;
+    }
+
+    // Read synchronously rather than inside requestAnimationFrame: rAF does not
+    // fire while the tab is hidden or otherwise not compositing, which would
+    // leave the toolbar stuck on a stale selection. The read is a handful of
+    // DOM lookups, and the comparison below keeps it from re-rendering.
+    const refresh = () => {
+      const next = formatterRef.current?.readState() ?? EMPTY_FORMAT_STATE;
+      setFormat((prev) =>
+        prev.bold === next.bold &&
+        prev.italic === next.italic &&
+        prev.link === next.link &&
+        prev.marker === next.marker &&
+        prev.inlineCode === next.inlineCode &&
+        prev.available === next.available
+          ? prev
+          : next
+      );
+    };
+
+    document.addEventListener("selectionchange", refresh);
+    refresh();
+
+    return () => {
+      document.removeEventListener("selectionchange", refresh);
+    };
+  }, [ready, mode]);
+
+  /**
+   * Applies an inline format to the current selection.
+   *
+   * The button suppresses mousedown so the selection survives the click; by the
+   * time this runs the caret is still where the user left it.
+   */
+  const applyFormat = useCallback(
+    (name: InlineFormatName) => {
+      const formatter = formatterRef.current;
+      if (!formatter || mode === "html") return;
+      if (!formatter.apply(name)) return;
+
+      // Editor.js's observer will fire onChange too; `record` collapses the
+      // duplicate, and syncing now keeps the word count and post form current.
+      void sync();
+      setFormat(formatter.readState());
+    },
+    [mode, sync]
+  );
 
   // ── Toolbar actions ───────────────────────────────────────────────────────
 
@@ -513,6 +613,28 @@ export default function BlogEditor({
           </ToolbarButton>
         )}
 
+        <span className="mx-1 h-5 w-px bg-gray-200" />
+
+        {/* Inline formatting — replaces Editor.js's floating selection menu,
+            which is hidden in globals.css. Buttons cancel mousedown so the
+            selection they act on survives the click. */}
+        {FORMAT_BUTTONS.map(({ name, icon: Icon, title }) => (
+          <ToolbarButton
+            key={name}
+            onClick={() => applyFormat(name)}
+            // A link can also be edited from a bare caret inside one.
+            disabled={
+              isHtmlMode ||
+              !ready ||
+              (!format.available && !(name === "link" && format.link))
+            }
+            active={format[name]}
+            title={title}
+          >
+            <Icon size={16} />
+          </ToolbarButton>
+        ))}
+
         <div className="ml-auto flex items-center gap-2 pr-1 text-[11px] text-gray-400">
           {isHtmlMode && (
             <span className="flex items-center gap-1 text-[#F15C20]">
@@ -599,6 +721,11 @@ function ToolbarButton({
     <button
       type="button"
       onClick={onClick}
+      // Load-bearing for the formatting buttons: the default mousedown moves
+      // focus out of the contenteditable, which collapses the selection before
+      // onClick can read it. Every toolbar action wants the caret left alone,
+      // so this is applied to all of them.
+      onMouseDown={(e) => e.preventDefault()}
       disabled={disabled}
       title={title}
       className={`flex items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors ${
