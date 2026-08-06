@@ -69,6 +69,7 @@ import {
   type InsertKind,
 } from "./blockActions";
 import type { Alignment } from "./AlignmentTune";
+import { validateHtml, formatHtml } from "./htmlFormat";
 
 interface BlogEditorProps {
   /** Stored Editor.js document. Ignored when it is not in Editor.js shape. */
@@ -623,7 +624,9 @@ export default function BlogEditor({
     const editor = editorRef.current;
     if (!editor) return;
     const output = await editor.save();
-    setHtmlDraft(blocksToHtml(output));
+    // Serialized HTML is one long line per block; indent it so it can be read
+    // and edited like a file rather than a wall of text.
+    setHtmlDraft(formatHtml(blocksToHtml(output)));
     setHtmlError(null);
     setMode("html");
   }, []);
@@ -632,6 +635,16 @@ export default function BlogEditor({
   const applyHtml = useCallback(async () => {
     const editor = editorRef.current;
     if (!editor) return;
+
+    // Refuse to apply broken markup. The importer would otherwise "succeed"
+    // against browser-repaired HTML and silently drop or re-nest content.
+    const check = validateHtml(htmlDraft);
+    if (!check.ok) {
+      setHtmlError(
+        check.line ? `Line ${check.line}: ${check.message}` : (check.message ?? "Invalid HTML.")
+      );
+      return;
+    }
 
     try {
       const blocks = htmlToBlocks(htmlDraft);
@@ -663,6 +676,9 @@ export default function BlogEditor({
    */
   const handleHtmlInput = useCallback((value: string) => {
     setHtmlDraft(value);
+    // Clear a previous complaint as soon as the markup becomes valid again, but
+    // never raise a new one mid-keystroke — half-typed HTML is always invalid.
+    setHtmlError((prev) => (prev && validateHtml(value).ok ? null : prev));
     if (htmlTimer.current) clearTimeout(htmlTimer.current);
     htmlTimer.current = setTimeout(() => {
       const blocks = htmlToBlocks(value);
@@ -733,6 +749,13 @@ export default function BlogEditor({
             <ToolbarButton onClick={applyHtml} title="Apply HTML changes" active>
               <FiCheck size={15} />
               <span className="text-[11px] font-semibold">Apply</span>
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => setHtmlDraft((draft) => formatHtml(draft))}
+              title="Format HTML"
+            >
+              <MdCode size={15} />
+              <span className="text-[11px] font-semibold">Format</span>
             </ToolbarButton>
             <ToolbarButton onClick={discardHtml} title="Discard HTML changes">
               <FiX size={15} />
@@ -874,14 +897,14 @@ export default function BlogEditor({
 
         {/* Hidden, not unmounted — keeps the instance and its history alive. */}
         {/*
-          The left padding is load-bearing: Editor.js renders the block toolbar
-          as `position:absolute; right:100%` of the content column, so the plus
-          / drag handles and the settings popover they open sit ~62px to the
-          LEFT of the text. Without a gutter at least that wide, this scroll
-          container clips them.
+          Padding is symmetric now. The old 80px left gutter existed only to
+          stop this scroll container clipping the plus / drag handles, which
+          Editor.js draws to the LEFT of the text column. Those handles are
+          gone — their controls live in the toolbar — so the text can sit
+          centred like it does on the published page.
         */}
         <div
-          className={`editor-js-container h-full overflow-y-auto py-6 pl-20 pr-6 ${
+          className={`editor-js-container h-full overflow-y-auto px-6 py-6 ${
             isHtmlMode ? "hidden" : ""
           }`}
         >

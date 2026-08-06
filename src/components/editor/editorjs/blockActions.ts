@@ -46,6 +46,32 @@ export const EMPTY_BLOCK_STATE: BlockState = {
   available: false,
 };
 
+/** The list tool stores plain strings in v1 and objects in v2. */
+interface ListItemData {
+  content?: string;
+  items?: ListItemData[];
+}
+
+interface ListBlockData {
+  style?: ListStyle;
+  items?: (ListItemData | string)[];
+}
+
+/**
+ * Flattens a (possibly nested) list into one line of HTML per item.
+ * Nesting is lost on unwrap — paragraphs have no depth to carry it.
+ */
+function flattenItems(items: (ListItemData | string)[]): string[] {
+  const lines: string[] = [];
+  for (const raw of items) {
+    const item = typeof raw === "string" ? { content: raw } : raw;
+    const content = (item.content ?? "").trim();
+    if (content) lines.push(content);
+    if (item.items?.length) lines.push(...flattenItems(item.items));
+  }
+  return lines;
+}
+
 /** Maps a toolbar choice onto the tool name plus the data it needs. */
 function conversionTarget(kind: BlockKind): { tool: string; data?: object } {
   if (kind === "paragraph") return { tool: "paragraph" };
@@ -184,17 +210,79 @@ export class BlockActions {
     }
   }
 
-  /** Converts the current block into a list of the given style. */
+  /**
+   * Toggles the current block between a list of `style` and plain paragraphs.
+   *
+   * Three cases, and they must stay distinct:
+   *   - not a list          -> convert into one
+   *   - a list of another   -> change only `style`. Running `convert` here
+   *     style                  would re-import the block through the list
+   *                            tool's conversionConfig, which flattens every
+   *                            item into a single one.
+   *   - a list of the same  -> unwrap it, one paragraph per item, so clicking
+   *     style                  the active button removes the formatting.
+   */
   async toList(style: ListStyle): Promise<boolean> {
     const block = this.currentBlock();
     if (!block) return false;
+
+    const isList = block.name === "list" || block.name === "nestedList";
+
     try {
-      await this.editor.blocks.convert(block.id, "list", { style });
-      return true;
+      if (!isList) {
+        await this.editor.blocks.convert(block.id, "list", { style });
+        return true;
+      }
+
+      const saved = await block.save();
+      const data = (saved as { data?: ListBlockData } | undefined)?.data ?? {};
+      const currentStyle = data.style ?? "unordered";
+
+      if (currentStyle !== style) {
+        // Replace rather than `update`: the list tool renders from the state it
+        // built at construction and ignores a changed `style` on update, so the
+        // bullets never actually turn into numbers. Re-inserting with the same
+        // items is the only way to restyle without losing them.
+        const index = this.currentIndex();
+        if (index < 0) return false;
+        this.editor.blocks.delete(index);
+        this.editor.blocks.insert(
+          "list",
+          { ...data, style },
+          undefined,
+          index,
+          true
+        );
+        return true;
+      }
+
+      return this.unwrapList(data);
     } catch (error) {
-      console.error("Cannot convert block to list:", error);
+      console.error("Cannot change list formatting:", error);
       return false;
     }
+  }
+
+  /** Replaces the current list block with one paragraph per item. */
+  private async unwrapList(data: ListBlockData): Promise<boolean> {
+    const index = this.currentIndex();
+    if (index < 0) return false;
+
+    const lines = flattenItems(data.items ?? []);
+    // An empty list still has to become something the caret can sit in.
+    if (lines.length === 0) lines.push("");
+
+    this.editor.blocks.delete(index);
+    lines.forEach((text, offset) => {
+      this.editor.blocks.insert(
+        "paragraph",
+        { text },
+        undefined,
+        index + offset,
+        offset === lines.length - 1
+      );
+    });
+    return true;
   }
 
   /** Sets the alignment tune on the current block. */
