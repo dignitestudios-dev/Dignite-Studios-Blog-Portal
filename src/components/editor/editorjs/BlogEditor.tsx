@@ -478,16 +478,7 @@ export default function BlogEditor({
           : next
       );
 
-      const nextBlock = blockActionsRef.current?.readState() ?? EMPTY_BLOCK_STATE;
-      setBlockState((prev) =>
-        prev.tool === nextBlock.tool &&
-        prev.kind === nextBlock.kind &&
-        prev.listStyle === nextBlock.listStyle &&
-        prev.alignment === nextBlock.alignment &&
-        prev.available === nextBlock.available
-          ? prev
-          : nextBlock
-      );
+      mergeBlockState(blockActionsRef.current?.readState() ?? EMPTY_BLOCK_STATE);
     };
 
     // `selectionchange` alone is not enough. Image, embed and divider blocks
@@ -537,6 +528,30 @@ export default function BlogEditor({
    * Every one of these mutates the document, so the save is forced rather than
    * left to Editor.js's own change event.
    */
+  /**
+   * Applies a fresh read without losing a width we already know.
+   *
+   * `imageWidth: 0` means the tune has not stamped its attribute yet, so the
+   * previous value is still the truthful one for the same block.
+   */
+  const mergeBlockState = useCallback((next: BlockState) => {
+    setBlockState((prev) => {
+      const merged =
+        next.tool === "image" && next.imageWidth === 0 && prev.tool === "image"
+          ? { ...next, imageWidth: prev.imageWidth }
+          : next;
+
+      return prev.tool === merged.tool &&
+        prev.kind === merged.kind &&
+        prev.listStyle === merged.listStyle &&
+        prev.alignment === merged.alignment &&
+        prev.imageWidth === merged.imageWidth &&
+        prev.available === merged.available
+        ? prev
+        : merged;
+    });
+  }, []);
+
   const runBlockAction = useCallback(
     async (action: (actions: BlockActions) => boolean | Promise<boolean>) => {
       const actions = blockActionsRef.current;
@@ -552,8 +567,8 @@ export default function BlogEditor({
       // straight away therefore saw the *old* value — which is why a new image
       // width did not light up until the post was saved and reloaded. Read
       // once now for responsiveness and again after the re-render lands.
-      setBlockState(actions.readState());
-      setTimeout(() => setBlockState(actions.readState()), 60);
+      mergeBlockState(actions.readState());
+      setTimeout(() => mergeBlockState(actions.readState()), 60);
     },
     [mode, sync]
   );
@@ -883,7 +898,13 @@ export default function BlogEditor({
             {IMAGE_WIDTHS.map((width) => (
               <ToolbarButton
                 key={width}
-                onClick={() => void runBlockAction((a) => a.setImageWidth(width))}
+                onClick={() => {
+                  // Reflect the choice at once; the DOM read that follows
+                  // reports 0 ("unknown") until the tune re-renders, and
+                  // mergeBlockState keeps this value in the meantime.
+                  setBlockState((s) => ({ ...s, imageWidth: width }));
+                  void runBlockAction((a) => a.setImageWidth(width));
+                }}
                 active={blockState.imageWidth === width}
                 title={`${width}% width`}
               >

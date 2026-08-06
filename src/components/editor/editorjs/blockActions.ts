@@ -298,8 +298,12 @@ export class BlockActions {
     const aligned = element?.querySelector<HTMLElement>("[data-ds-align]");
     const alignment = (aligned?.dataset.dsAlign as Alignment | undefined) ?? "left";
 
+    // 0 means "not known yet", NOT 100%. The tune stamps `data-ds-width` during
+    // its render, so straight after a width change the attribute may not be
+    // there — defaulting to 100 made the toolbar confidently highlight the
+    // wrong button until the post was saved and reloaded.
     const sized = element?.querySelector<HTMLElement>("[data-ds-width]");
-    const imageWidth = tool === "image" ? Number(sized?.dataset.dsWidth ?? 100) || 100 : 0;
+    const imageWidth = tool === "image" ? Number(sized?.dataset.dsWidth) || 0 : 0;
 
     return { tool, kind, listStyle, alignment, imageWidth, available: true };
   }
