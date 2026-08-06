@@ -264,6 +264,16 @@ body {
   display: none !important;
 }
 
+/* ─── Block controls live in the top toolbar too ─────────────────────────────
+   Only the two gutter handles are hidden, never `.ce-toolbar` itself: the
+   toolbox and block-settings popovers are rendered *inside* it, so hiding the
+   container would hide the menus the toolbar buttons are meant to open.
+   ─────────────────────────────────────────────────────────────────────────── */
+.editor-js-container .ce-toolbar__plus,
+.editor-js-container .ce-toolbar__settings-btn {
+  display: none !important;
+}
+
 /* Generous tail room so a block menu opened on the last block still has space
    to expand downward instead of being clipped by the scroll container. */
 .editor-js-container .codex-editor__redactor {

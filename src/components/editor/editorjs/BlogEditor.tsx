@@ -36,6 +36,20 @@ import {
   MdLink,
   MdBorderColor,
   MdCode,
+  MdFormatListBulleted,
+  MdFormatListNumbered,
+  MdChecklist,
+  MdFormatAlignLeft,
+  MdFormatAlignCenter,
+  MdFormatAlignRight,
+  MdImage,
+  MdTableChart,
+  MdHorizontalRule,
+  MdOndemandVideo,
+  MdCampaign,
+  MdArrowUpward,
+  MdArrowDownward,
+  MdDeleteOutline,
 } from "react-icons/md";
 import { blocksToHtml } from "./blocksToHtml";
 import { htmlToBlocks } from "./htmlToBlocks";
@@ -46,6 +60,15 @@ import {
   type InlineFormatName,
   type InlineFormatState,
 } from "./inlineFormat";
+import {
+  BlockActions,
+  EMPTY_BLOCK_STATE,
+  type BlockKind,
+  type BlockState,
+  type ListStyle,
+  type InsertKind,
+} from "./blockActions";
+import type { Alignment } from "./AlignmentTune";
 
 interface BlogEditorProps {
   /** Stored Editor.js document. Ignored when it is not in Editor.js shape. */
@@ -68,6 +91,57 @@ const FORMAT_BUTTONS: {
   { name: "marker", icon: MdBorderColor, title: "Highlight" },
   { name: "inlineCode", icon: MdCode, title: "Inline code" },
 ];
+
+type IconType = React.ComponentType<{ size?: number }>;
+
+/** Format dropdown. H1 is omitted: it belongs to the post title. */
+const BLOCK_KINDS: { value: BlockKind; label: string }[] = [
+  { value: "paragraph", label: "Paragraph" },
+  { value: "h2", label: "Heading 2" },
+  { value: "h3", label: "Heading 3" },
+  { value: "h4", label: "Heading 4" },
+  { value: "h5", label: "Heading 5" },
+  { value: "h6", label: "Heading 6" },
+  { value: "quote", label: "Quote" },
+  { value: "code", label: "Code" },
+];
+
+const LIST_BUTTONS: { style: ListStyle; icon: IconType; title: string }[] = [
+  { style: "unordered", icon: MdFormatListBulleted, title: "Bulleted list" },
+  { style: "ordered", icon: MdFormatListNumbered, title: "Numbered list" },
+  { style: "checklist", icon: MdChecklist, title: "Checklist" },
+];
+
+const ALIGN_BUTTONS: { value: Alignment; icon: IconType; title: string }[] = [
+  { value: "left", icon: MdFormatAlignLeft, title: "Align left" },
+  { value: "center", icon: MdFormatAlignCenter, title: "Align center" },
+  { value: "right", icon: MdFormatAlignRight, title: "Align right" },
+];
+
+const INSERT_BUTTONS: { kind: InsertKind; icon: IconType; title: string }[] = [
+  { kind: "image", icon: MdImage, title: "Insert image" },
+  { kind: "table", icon: MdTableChart, title: "Insert table" },
+  { kind: "delimiter", icon: MdHorizontalRule, title: "Insert divider" },
+  { kind: "embed", icon: MdOndemandVideo, title: "Insert embed" },
+  { kind: "cta", icon: MdCampaign, title: "Insert CTA banner" },
+];
+
+/** Human label for a block the format dropdown cannot represent. */
+function describeTool(tool: string): string {
+  if (!tool) return "—";
+  const names: Record<string, string> = {
+    list: "List",
+    nestedList: "List",
+    checklist: "Checklist",
+    table: "Table",
+    image: "Image",
+    delimiter: "Divider",
+    embed: "Embed",
+    cta: "CTA Banner",
+    raw: "Raw HTML",
+  };
+  return names[tool] ?? tool;
+}
 
 const SAVE_DEBOUNCE_MS = 300;
 const HTML_DEBOUNCE_MS = 400;
@@ -107,6 +181,7 @@ export default function BlogEditor({
   const editorRef = useRef<EditorJS | null>(null);
   const historyRef = useRef<EditorHistory | null>(null);
   const formatterRef = useRef<InlineFormatter | null>(null);
+  const blockActionsRef = useRef<BlockActions | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const htmlTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -125,6 +200,7 @@ export default function BlogEditor({
   const [words, setWords] = useState(() => countWords(contentHtml ?? ""));
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [format, setFormat] = useState<InlineFormatState>(EMPTY_FORMAT_STATE);
+  const [blockState, setBlockState] = useState<BlockState>(EMPTY_BLOCK_STATE);
 
   // Exit fullscreen with Escape
   useEffect(() => {
@@ -325,6 +401,7 @@ export default function BlogEditor({
               LinkTool: LinkTool as never,
             },
           });
+          blockActionsRef.current = new BlockActions(instance, holderRef.current);
         },
       });
 
@@ -358,6 +435,7 @@ export default function BlogEditor({
       historyRef.current?.destroy();
       historyRef.current = null;
       formatterRef.current = null;
+      blockActionsRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -372,6 +450,7 @@ export default function BlogEditor({
   useEffect(() => {
     if (!ready || mode === "html") {
       setFormat(EMPTY_FORMAT_STATE);
+      setBlockState(EMPTY_BLOCK_STATE);
       return;
     }
 
@@ -390,6 +469,17 @@ export default function BlogEditor({
         prev.available === next.available
           ? prev
           : next
+      );
+
+      const nextBlock = blockActionsRef.current?.readState() ?? EMPTY_BLOCK_STATE;
+      setBlockState((prev) =>
+        prev.tool === nextBlock.tool &&
+        prev.kind === nextBlock.kind &&
+        prev.listStyle === nextBlock.listStyle &&
+        prev.alignment === nextBlock.alignment &&
+        prev.available === nextBlock.available
+          ? prev
+          : nextBlock
       );
     };
 
@@ -417,6 +507,26 @@ export default function BlogEditor({
       // duplicate, and syncing now keeps the word count and post form current.
       void sync();
       setFormat(formatter.readState());
+    },
+    [mode, sync]
+  );
+
+  /**
+   * Runs a block operation and folds the result back into the toolbar.
+   *
+   * Every one of these mutates the document, so the save is forced rather than
+   * left to Editor.js's own change event.
+   */
+  const runBlockAction = useCallback(
+    async (action: (actions: BlockActions) => boolean | Promise<boolean>) => {
+      const actions = blockActionsRef.current;
+      if (!actions || mode === "html") return;
+
+      const changed = await action(actions);
+      if (!changed) return;
+
+      void sync();
+      setBlockState(actions.readState());
     },
     [mode, sync]
   );
@@ -573,7 +683,34 @@ export default function BlogEditor({
       }
     >
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
-      <div className="z-20 flex flex-shrink-0 items-center gap-1 border-b border-gray-100 bg-gray-50/80 px-2 py-1.5">
+      {/* Wraps rather than overflows: the full control set is wider than a
+          narrow editor column, and a scrolling toolbar hides controls. */}
+      <div className="z-20 flex flex-shrink-0 flex-wrap items-center gap-1 gap-y-1.5 border-b border-gray-100 bg-gray-50/80 px-2 py-1.5">
+        {/* Block type — the equivalent of the classic editor's format dropdown. */}
+        <select
+          value={blockState.kind || ""}
+          onChange={(e) => {
+            if (!e.target.value) return;
+            void runBlockAction((a) => a.convertTo(e.target.value as BlockKind));
+          }}
+          disabled={isHtmlMode || !ready || !blockState.available}
+          title="Block type"
+          className="h-[30px] rounded-md border border-gray-200 bg-white px-1.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#F15C20] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {/* Blocks with no text equivalent (list, table, image…) are shown by
+              name rather than silently reading "Paragraph". */}
+          {!blockState.kind && (
+            <option value="">{describeTool(blockState.tool)}</option>
+          )}
+          {BLOCK_KINDS.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+
+        <span className="mx-1 h-5 w-px bg-gray-200" />
+
         <ToolbarButton
           onClick={handleUndo}
           disabled={isHtmlMode || !history.canUndo}
@@ -634,6 +771,75 @@ export default function BlogEditor({
             <Icon size={16} />
           </ToolbarButton>
         ))}
+
+        <span className="mx-1 h-5 w-px bg-gray-200" />
+
+        {/* Lists */}
+        {LIST_BUTTONS.map(({ style, icon: Icon, title }) => (
+          <ToolbarButton
+            key={style}
+            onClick={() => void runBlockAction((a) => a.toList(style))}
+            disabled={isHtmlMode || !ready || !blockState.available}
+            active={blockState.listStyle === style}
+            title={title}
+          >
+            <Icon size={17} />
+          </ToolbarButton>
+        ))}
+
+        <span className="mx-1 h-5 w-px bg-gray-200" />
+
+        {/* Alignment */}
+        {ALIGN_BUTTONS.map(({ value, icon: Icon, title }) => (
+          <ToolbarButton
+            key={value}
+            onClick={() => void runBlockAction((a) => a.setAlignment(value))}
+            disabled={isHtmlMode || !ready || !blockState.available}
+            active={blockState.alignment === value}
+            title={title}
+          >
+            <Icon size={17} />
+          </ToolbarButton>
+        ))}
+
+        <span className="mx-1 h-5 w-px bg-gray-200" />
+
+        {/* Insert */}
+        {INSERT_BUTTONS.map(({ kind, icon: Icon, title }) => (
+          <ToolbarButton
+            key={kind}
+            onClick={() => void runBlockAction((a) => a.insert(kind))}
+            disabled={isHtmlMode || !ready}
+            title={title}
+          >
+            <Icon size={17} />
+          </ToolbarButton>
+        ))}
+
+        <span className="mx-1 h-5 w-px bg-gray-200" />
+
+        {/* Block position */}
+        <ToolbarButton
+          onClick={() => void runBlockAction((a) => a.move("up"))}
+          disabled={isHtmlMode || !ready || !blockState.available}
+          title="Move block up"
+        >
+          <MdArrowUpward size={16} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => void runBlockAction((a) => a.move("down"))}
+          disabled={isHtmlMode || !ready || !blockState.available}
+          title="Move block down"
+        >
+          <MdArrowDownward size={16} />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => void runBlockAction((a) => a.remove())}
+          disabled={isHtmlMode || !ready || !blockState.available}
+          title="Delete block"
+        >
+          <MdDeleteOutline size={17} />
+        </ToolbarButton>
 
         <div className="ml-auto flex items-center gap-2 pr-1 text-[11px] text-gray-400">
           {isHtmlMode && (
